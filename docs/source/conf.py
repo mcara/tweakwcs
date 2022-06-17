@@ -32,13 +32,14 @@ sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../../src'))
 sys.path.insert(0, os.path.abspath('../../build/lib*'))
 sys.path.insert(0, os.path.abspath('../../tweakwcs/'))
+sys.path.insert(0, os.path.abspath('../exts/'))
 
 # -- General configuration ------------------------------------------------
 conf.read([os.path.join(os.path.dirname(__file__), '../..', 'setup.cfg')])
 setup_cfg = dict(conf.items('metadata'))
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.3'
+# needs_sphinx = '1.3'
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -68,7 +69,7 @@ intersphinx_mapping = {
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    # 'numfig',
+    'numfig',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
@@ -229,13 +230,13 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['../_static/css']
+#html_static_path = ['../_static/css']
 # html_context = {
 #     'css_files': [
-#         '../_static/css/custom.css', 'custom.css'
+#         '../_static/css/custom.css',
 #     ],
 # }
-# html_style = 'custom.css'
+#html_style = 'custom.css'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
