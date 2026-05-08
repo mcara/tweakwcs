@@ -43,12 +43,11 @@ test = [
     "scipy",
 ]
 docs = [
-    "tomli; python_version<'3.11'",
+    "tomli; python_version<='3.11'",
     "numpydoc",
-    "sphinx",
+    "sphinx>=7.2",
     "sphinx-automodapi",
-    "sphinx-rtd-theme",
-    "stsci-rtd-theme",
+    "sphinx-rtd-theme>1.2.0",
     "graphviz",
 ]
 

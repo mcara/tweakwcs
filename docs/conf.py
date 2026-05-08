@@ -83,6 +83,7 @@ intersphinx_mapping = {
 extensions = [
     'numfig',
     'sphinx.ext.autodoc',
+    "sphinx.ext.napoleon",
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.inheritance_diagram',
