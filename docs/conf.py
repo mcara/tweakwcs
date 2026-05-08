@@ -4,7 +4,6 @@ import os
 import sys
 import datetime
 import sphinx
-import stsci_rtd_theme
 from pathlib import Path
 from packaging.version import Version
 
@@ -82,7 +81,9 @@ intersphinx_mapping = {
 # ones.
 extensions = [
     'numfig',
+    'sphinxcontrib.jquery',
     'sphinx.ext.autodoc',
+    "sphinx.ext.napoleon",
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.inheritance_diagram',
@@ -207,7 +208,7 @@ graphviz_dot_args = [
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'stsci_rtd_theme'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -223,7 +224,7 @@ html_theme_options = {
 #        }
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [stsci_rtd_theme.get_html_theme_path()]
+# html_theme_path = []
 
 html_title = f'{project} v{release}'
 
@@ -244,10 +245,14 @@ html_title = f'{project} v{release}'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 html_style = 'css/custom-tweakwcs.css'
+# html_js_files = [
+#     'searchtools.js',
+#     'language_data.js',
+# ]
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-# html_logo = '_static/stsci_logo_small.png'
+html_logo = '_static/stsci_pri_combo_mark_white.png'
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied

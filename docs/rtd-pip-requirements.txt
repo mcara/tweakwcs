@@ -2,9 +2,8 @@ setuptools
 numpy
 astropy
 numpydoc
-sphinx
+sphinx>=7.2
 sphinx-automodapi
 sphinx_rtd_theme>1.2.0
-stsci-rtd-theme
 sphinx-astropy
 graphviz
