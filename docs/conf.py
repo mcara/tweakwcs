@@ -81,6 +81,7 @@ intersphinx_mapping = {
 # ones.
 extensions = [
     'numfig',
+    'sphinxcontrib.jquery',
     'sphinx.ext.autodoc',
     "sphinx.ext.napoleon",
     'sphinx.ext.intersphinx',
