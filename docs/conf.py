@@ -4,7 +4,6 @@ import os
 import sys
 import datetime
 import sphinx
-import stsci_rtd_theme
 from pathlib import Path
 from packaging.version import Version
 
