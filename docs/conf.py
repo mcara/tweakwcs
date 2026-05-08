@@ -223,7 +223,7 @@ html_theme_options = {
 #        }
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = []
+# html_theme_path = []
 
 html_title = f'{project} v{release}'
 
@@ -244,6 +244,10 @@ html_title = f'{project} v{release}'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 html_style = 'css/custom-tweakwcs.css'
+html_js_files = [
+    'searchtools.js',
+    'language_data.js',
+]
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
