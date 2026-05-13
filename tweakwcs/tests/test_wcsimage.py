@@ -5,16 +5,16 @@ Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
 import copy
-import pytest
-import numpy as np
-from astropy.table import Table, Column
-from astropy.io import fits
-from astropy import wcs
-from tweakwcs import XYXYMatch, FITSWCSCorrector
-from tweakwcs.wcsimage import (convex_hull, RefCatalog, WCSImageCatalog,
-                               WCSGroupCatalog, _is_int)
-from astropy.utils.data import get_pkg_data_filename
 
+import numpy as np
+import pytest
+
+from astropy import wcs
+from astropy.io import fits
+from astropy.table import Column, Table
+from astropy.utils.data import get_pkg_data_filename
+from tweakwcs import FITSWCSCorrector, XYXYMatch
+from tweakwcs.wcsimage import RefCatalog, WCSGroupCatalog, WCSImageCatalog, _is_int, convex_hull
 
 _ATOL = 100 * np.finfo(np.array([1.]).dtype).eps
 
@@ -104,12 +104,12 @@ def test_wcsimcat_wcs_transforms_roundtrip(mock_fits_wcs):
 
 
 def test_wcsimcat_intersections(mock_fits_wcs, rect_imcat):
-    pts1 = list(rect_imcat.polygon.points)[0]
-    pts2 = list(rect_imcat.intersection(rect_imcat.polygon).points)[0]
+    pts1 = next(iter(rect_imcat.polygon.points))
+    pts2 = next(iter(rect_imcat.intersection(rect_imcat.polygon).points))
     for pt1 in pts1:
         assert any(np.allclose(pt1, pt2) for pt2 in pts2)
 
-    pts2 = list(rect_imcat.intersection(rect_imcat).points)[0]
+    pts2 = next(iter(rect_imcat.intersection(rect_imcat.polygon).points))
     for pt1 in pts1:
         assert any(np.allclose(pt1, pt2) for pt2 in pts2)
 
@@ -290,7 +290,10 @@ def test_wcsgroupcat_create_group_catalog(mock_fits_wcs, rect_imcat):
     g[0].catalog.add_column(Column(np.ones(5)), name='weight')
     with pytest.raises(KeyError) as e:
         g.create_group_catalog()
-        assert False
+        pytest.fail(
+            "Expected a KeyError due to missing 'weight' column in one "
+            "of the catalogs."
+        )
     assert (e.value.args[0] == "Non-empty catalogs in a group must all "
             "either have or not have 'weight' column.")
     g[0].catalog.remove_column('weight')

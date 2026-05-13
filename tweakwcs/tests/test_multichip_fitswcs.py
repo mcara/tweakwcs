@@ -1,13 +1,12 @@
 from itertools import product
 
 import numpy as np
-from astropy.io import fits
-from astropy import table
-from astropy import wcs
-from astropy.utils.data import get_pkg_data_filename
 import pytest
 
 import tweakwcs
+from astropy import table, wcs
+from astropy.io import fits
+from astropy.utils.data import get_pkg_data_filename
 
 
 def _match(x, y, tp_pscale, tp_units, **kwargs):

@@ -8,29 +8,28 @@ source catalogs.
 :License: :doc:`LICENSE`
 
 """
-from copy import deepcopy
 import logging
 import numbers
 import os
 import sys
+from copy import deepcopy
 
 import numpy as np
+from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
+from spherical_geometry.polygon import MalformedPolygonError, SphericalPolygon
+
 from astropy import table
 from astropy.utils.decorators import deprecated, deprecated_renamed_argument
-from spherical_geometry.polygon import SphericalPolygon, MalformedPolygonError
-from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
-
-from .linearfit import SUPPORTED_FITGEOM_MODES
-from .wcsutils import planar_rot_3d
-from .correctors import WCSCorrector
-from .linalg import inv
-from .linearfit import iter_linear_fit
 
 from . import __version__  # noqa: F401
+from .correctors import WCSCorrector
+from .linalg import inv
+from .linearfit import SUPPORTED_FITGEOM_MODES, iter_linear_fit
+from .wcsutils import planar_rot_3d
 
 __author__ = 'Mihai Cara'
 
-__all__ = ['convex_hull', 'RefCatalog', 'WCSImageCatalog', 'WCSGroupCatalog']
+__all__ = ['RefCatalog', 'WCSGroupCatalog', 'WCSImageCatalog', 'convex_hull']
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -46,7 +45,7 @@ def _is_int(n):
     )
 
 
-class WCSImageCatalog(object):
+class WCSImageCatalog:
     """
     A class that holds information pertinent to an image WCS and a source
     catalog of the sources found in that image.
@@ -104,20 +103,20 @@ class WCSImageCatalog(object):
 
     @property
     def poly_area(self):
-        """ Area of the bounding polygon (in srad).
+        """Area of the bounding polygon (in srad).
         """
         return self._poly_area
 
     @property
     @deprecated("0.8.0", obj_type='property')
     def tpwcs(self):
-        """ Get :py:class:`WCSCorrector` WCS. """
+        """Get :py:class:`WCSCorrector` WCS."""
         return self._corr
 
     @tpwcs.setter
     @deprecated("0.8.0", obj_type='property')
     def tpwcs(self, tpwcs):
-        """ Get/Set catalog's WCS (a :py:class:`WCSCorrector`-derived object).
+        """Get/Set catalog's WCS (a :py:class:`WCSCorrector`-derived object).
 
         .. note::
             Setting the WCS triggers automatic bounding polygon recalculation.
@@ -139,12 +138,12 @@ class WCSImageCatalog(object):
 
     @property
     def corrector(self):
-        """ Get :py:class:`WCSCorrector` WCS. """
+        """Get :py:class:`WCSCorrector` WCS."""
         return self._corr
 
     @corrector.setter
     def corrector(self, corrector):
-        """ Get/Set catalog's WCS (a :py:class:`WCSCorrector`-derived object).
+        """Get/Set catalog's WCS (a :py:class:`WCSCorrector`-derived object).
 
         .. note::
             Setting the WCS triggers automatic bounding polygon recalculation.
@@ -190,8 +189,11 @@ class WCSImageCatalog(object):
 
     @group_id.setter
     def group_id(self, group_id):
-        # check if input is hashable:
-        {group_id: None}
+        try:
+            # check if input is hashable:
+            hash(group_id)
+        except TypeError:
+            raise TypeError("'group_id' must be hashable.")
         self._group_id = group_id
 
     @property
@@ -221,7 +223,7 @@ class WCSImageCatalog(object):
 
     @property
     def catalog(self):
-        """ Get/set image's catalog. """
+        """Get/set image's catalog."""
         return self._catalog
 
     @catalog.setter
@@ -289,7 +291,7 @@ class WCSImageCatalog(object):
 
     @property
     def polygon(self):
-        """ Get image's (or catalog's) bounding spherical polygon.
+        """Get image's (or catalog's) bounding spherical polygon.
         """
         return self._polygon
 
@@ -331,7 +333,7 @@ class WCSImageCatalog(object):
         # """
         # return np.fabs(self.intersection(wcsim).area())
     def intersection_area(self, wcsim):
-        """ Calculate the area of the intersection polygon. """
+        """Calculate the area of the intersection polygon."""
         if isinstance(wcsim, (WCSImageCatalog, RefCatalog)):
             return np.fabs(self.intersection(wcsim).area())
 
@@ -416,13 +418,13 @@ class WCSImageCatalog(object):
             nintx = max(2, int(np.ceil((hx - lx) / stepsize)))
             ninty = max(2, int(np.ceil((hy - ly) / stepsize)))
 
-        xs = np.linspace(lx, hx, nintx + 1, dtype=np.double)
-        ys = np.linspace(ly, hy, ninty + 1, dtype=np.double)[1:-1]
-        nptx = xs.size
-        npty = ys.size
+        xs = np.linspace(lx, hx, nintx + 1, dtype=np.double).tolist()
+        ys = np.linspace(ly, hy, ninty + 1, dtype=np.double).tolist()[1:-1]
+        nptx = len(xs)
+        npty = len(ys)
 
         # bottom
-        borderx = [x for x in xs]
+        borderx = list(xs)
         bordery = nptx * [ly]
 
         # right
@@ -508,7 +510,7 @@ class WCSImageCatalog(object):
         return self._bb_radec
 
 
-class WCSGroupCatalog(object):
+class WCSGroupCatalog:
     """
     A class that holds together `WCSImageCatalog` image catalog objects
     whose relative positions are fixed and whose source catalogs should be
@@ -573,13 +575,13 @@ class WCSGroupCatalog(object):
 
     @property
     def poly_area(self):
-        """ Area of the bounding polygon (in srad).
+        """Area of the bounding polygon (in srad).
         """
         return self._poly_area
 
     @property
     def name(self):
-        """ Get/set :py:class:`WCSImageCatalog` object's name.
+        """Get/set :py:class:`WCSImageCatalog` object's name.
         """
         return self._name
 
@@ -589,7 +591,7 @@ class WCSGroupCatalog(object):
 
     @property
     def bb_policy(self):
-        """ Get/set :py:class:`WCSImageCatalog` policy for switching to
+        """Get/set :py:class:`WCSImageCatalog` policy for switching to
         approximate computation of group's bounding box.
         """
         return self._bb_policy
@@ -612,7 +614,7 @@ class WCSGroupCatalog(object):
 
     @property
     def polygon(self):
-        """ Get image's (or catalog's) bounding spherical polygon.
+        """Get image's (or catalog's) bounding spherical polygon.
         """
         return self._polygon
 
@@ -654,7 +656,7 @@ class WCSGroupCatalog(object):
         # """
         # return np.fabs(self.intersection(wcsim).area())
     def intersection_area(self, wcsim):
-        """ Calculate the area of the intersection polygon.
+        """Calculate the area of the intersection polygon.
         """
         return sum(im.intersection_area(wcsim) for im in self._images)
 
@@ -712,7 +714,7 @@ class WCSGroupCatalog(object):
         self._poly_area = np.fabs(self._polygon.area())
 
     def update_bounding_polygon(self):
-        """ Recompute bounding polygons of the member images.
+        """Recompute bounding polygons of the member images.
         """
         if len(self._images) > self._bb_threshold:
             self._aproximate_bb()
@@ -744,12 +746,11 @@ class WCSGroupCatalog(object):
         return self._images[idx]
 
     def __iter__(self):
-        for image in self._images:
-            yield image
+        yield from self._images
 
     @property
     def catalog(self):
-        """ Get/set image's catalog.
+        """Get/set image's catalog.
         """
         return self._catalog
 
@@ -774,7 +775,7 @@ class WCSGroupCatalog(object):
 
             cat_name = image.catalog.meta.get(
                 'name',
-                image.name if image.name else 'Unnamed'
+                image.name or 'Unnamed'
             )
             cat_names.append(cat_name)
 
@@ -785,7 +786,7 @@ class WCSGroupCatalog(object):
                                "either have or not have 'weight' column.")
 
             if image.name is None:
-                catname = 'Catalog #{:d}'.format(catno)
+                catname = f"Catalog #{catno:d}"
             else:
                 catname = image.name
 
@@ -832,7 +833,7 @@ class WCSGroupCatalog(object):
             # columns and types:
             image = self._images[0]
             if image.name is None:
-                catname = 'Catalog #{:d}'.format(catno)
+                catname = f"Catalog #{catno:d}"
             else:
                 catname = image.name
 
@@ -876,7 +877,7 @@ class WCSGroupCatalog(object):
         return self._catalog[mask]
 
     def recalc_catalog_radec(self):
-        """ Recalculate RA and DEC of the sources in the catalog.
+        """Recalculate RA and DEC of the sources in the catalog.
         """
         for k, image in enumerate(self._images):
 
@@ -920,7 +921,7 @@ class WCSGroupCatalog(object):
         )
 
     def match2ref(self, refcat, match=None):
-        """ Uses ``xyxymatch`` to cross-match sources between this catalog and
+        """Uses ``xyxymatch`` to cross-match sources between this catalog and
             a reference catalog.
 
         Parameters
@@ -937,7 +938,6 @@ class WCSGroupCatalog(object):
 
         Returns
         -------
-
         nmatches: int
             Number of found matches.
 
@@ -958,9 +958,11 @@ class WCSGroupCatalog(object):
                 raise ValueError("When matching is not requested, catalogs "
                                  "should have been matched previously and "
                                  "have equal lengths.")
-            log.info("No matching of sources from '{:}' catalog with sources "
-                     "from the reference '{:}' catalog was requested."
-                     .format(self.name, refcat.name))
+            log.info(
+                "No matching of sources from '%s' catalog with sources from the "
+                "reference '%s' catalog was requested.",
+                self.name, refcat.name
+            )
             log.info("Catalogs are assumed matched with 1-to-1 "
                      "correspondence.")
             mref_idx = np.arange(catlen)
@@ -999,7 +1001,7 @@ class WCSGroupCatalog(object):
             self._catalog.add_column(c)
 
         self._catalog['matched_ref_id'].mask[minput_idx] = False
-        self._catalog['matched_ref_id'][minput_idx] = refcat.catalog['id'][mref_idx]  # noqa: E501
+        self._catalog['matched_ref_id'][minput_idx] = refcat.catalog['id'][mref_idx]
 
         # this is needed to index reference catalog directly without using
         # astropy table indexing which, at this moment, is experimental:
@@ -1012,7 +1014,7 @@ class WCSGroupCatalog(object):
         self._catalog['_raw_matched_ref_idx'][minput_idx] = mref_idx
         self._catalog['_raw_matched_ref_idx'].mask[minput_idx] = False
 
-        log.info("Found {:d} matches for '{}'...".format(nmatches, self.name))
+        log.info("Found %d matches for '%s'...", nmatches, self.name)
 
         # TODO: revisit this once the bug described in
         # https://github.com/spacetelescope/stsci.stimage/issues/8
@@ -1167,36 +1169,33 @@ class WCSGroupCatalog(object):
         fit['fit_xy'] = xy_fit
         fit['fit_RA'], fit['fit_DEC'] = tanplane_wcs.tanp_to_world(*(xy_fit.T))
 
-        log.info("Computed '{:s}' fit for {}:".format(fitgeom, self.name))
+        log.info("Computed '%s' fit for '%s':", fitgeom, self.name)
         if fitgeom == 'shift':
-            log.info("XSH: {:.6g}  YSH: {:.6g}".format(*fit['shift']))
+            log.info("XSH: %.6g  YSH: %.6g", fit['shift'][0], fit['shift'][1])
         elif fitgeom in ['rshift', 'rscale'] and fit['proper']:
             log.info(
-                "XSH: {:.6g}  YSH: {:.6g}    ROT: {:.6g}    SCALE: {:.6g}"
-                .format(*fit['shift'], fit['proper_rot'], fit['<scale>'])
+                "XSH: %.6g  YSH: %.6g    ROT: %.6g    SCALE: %.6g",
+                fit['shift'][0], fit['shift'][1], fit['proper_rot'], fit['<scale>']
             )
         elif fitgeom == 'general' or (fitgeom in ['rshift', 'rscale'] and not
                                       fit['proper']):
-            log.info("XSH: {:.6g}  YSH: {:.6g}    PROPER ROT: {:.6g}    "
-                     .format(*fit['shift'], fit['proper_rot']))
-            log.info("<ROT>: {:.6g}  SKEW: {:.6g}    ROT_X: {:.6g}  "
-                     "ROT_Y: {:.6g}".format(fit['<rot>'], fit['skew'],
-                                            *fit['rot']))
-            log.info("<SCALE>: {:.6g}  SCALE_X: {:.6g}  SCALE_Y: {:.6g}"
-                     .format(fit['<scale>'], *fit['scale']))
+            log.info("XSH: %.6g  YSH: %.6g    PROPER ROT: %.6g",
+                     fit['shift'][0], fit['shift'][1], fit['proper_rot'])
+            log.info("<ROT>: %.6g  SKEW: %.6g    ROT_X: %.6g  ROT_Y: %.6g",
+                     fit['<rot>'], fit['skew'], fit['rot'][0], fit['rot'][1])
+            log.info("<SCALE>: %.6g  SCALE_X: %.6g  SCALE_Y: %.6g",
+                     fit['<scale>'], fit['scale'][0], fit['scale'][1])
         else:
             raise ValueError("Unsupported fit geometry.")  # pragma: no cover
 
         log.info("")
-        log.info("FIT RMSE: {:.6g}   FIT MAE: {:.6g}"
-                 .format(fit['rmse'], fit['mae']))
-        log.info("Final solution based on {:d} objects."
-                 .format(fit['resids'].shape[0]))
+        log.info("FIT RMSE: %.6g   FIT MAE: %.6g", fit['rmse'], fit['mae'])
+        log.info("Final solution based on %d objects.", fit['resids'].shape[0])
 
         return fit
 
     def apply_affine_to_wcs(self, ref_tpwcs, matrix, shift, meta=None):
-        """ Applies a general affine transformation to the WCS. """
+        """Applies a general affine transformation to the WCS."""
         for imcat in self:
             imcat.corrector.set_correction(matrix, shift, ref_tpwcs=ref_tpwcs,
                                            meta=meta)
@@ -1347,8 +1346,9 @@ class WCSGroupCatalog(object):
         """
         if not self._images:
             name = 'Unnamed' if self.name is None else self.name
-            log.warning("WCSGroupCatalog '{:s}' is empty. Nothing to align."
-                        .format(name))
+            log.warning(
+                "WCSGroupCatalog '%s' is empty. Nothing to align.", name
+            )
             return False
 
         # set initial status to 'FAILED':
@@ -1357,7 +1357,7 @@ class WCSGroupCatalog(object):
 
         if minobj is None:
             minobj = SUPPORTED_FITGEOM_MODES[fitgeom]
-            log.debug(f"Setting 'minobj' to {minobj} for fitgeom='{fitgeom}'")
+            log.debug("Setting 'minobj' to %d for fitgeom='%s'", minobj, fitgeom)
 
         if ref_tpwcs is None:
             ref_tpwcs = deepcopy(self._images[0].corrector)
@@ -1373,8 +1373,9 @@ class WCSGroupCatalog(object):
         if nmatches < minobj:
             name = 'Unnamed' if self.name is None else self.name
             log.warning(
-                f"Not enough matches ({nmatches:d}) found for image "
-                f"catalog '{name:s}'. Min requred: {minobj:d}."
+                "Not enough matches (%d) found for image "
+                "catalog '%s'. Min required: %d.",
+                nmatches, name, minobj
             )
             for imcat in self:
                 imcat.fit_status = 'FAILED: not enough matches'
@@ -1427,7 +1428,7 @@ class WCSGroupCatalog(object):
         return True
 
 
-class RefCatalog(object):
+class RefCatalog:
     """
     An object that holds a reference catalog and provides
     tools for coordinate convertions using reference WCS as well as
@@ -1473,7 +1474,7 @@ class RefCatalog(object):
 
     @property
     def name(self):
-        """ Get/set :py:class:`RefCatalog` object's name.
+        """Get/set :py:class:`RefCatalog` object's name.
         """
         return self._name
 
@@ -1483,7 +1484,7 @@ class RefCatalog(object):
 
     @property
     def catalog(self):
-        """ Get/set image's catalog.
+        """Get/set image's catalog.
         """
         return self._catalog
 
@@ -1505,13 +1506,13 @@ class RefCatalog(object):
 
     @property
     def poly_area(self):
-        """ Area of the bounding polygon (in srad).
+        """Area of the bounding polygon (in srad).
         """
         return self._poly_area
 
     @property
     def polygon(self):
-        """ Get image's (or catalog's) bounding spherical polygon.
+        """Get image's (or catalog's) bounding spherical polygon.
         """
         return self._polygon
 
@@ -1553,7 +1554,7 @@ class RefCatalog(object):
         # """
         # return np.fabs(self.intersection(wcsim).area())
     def intersection_area(self, wcsim):
-        """ Calculate the area of the intersection polygon.
+        """Calculate the area of the intersection polygon.
         """
         if isinstance(wcsim, (WCSImageCatalog, RefCatalog)):
             return np.fabs(self.intersection(wcsim).area())
@@ -1691,7 +1692,7 @@ class RefCatalog(object):
         self._poly_area = np.fabs(self._polygon.area())
 
     def calc_bounding_polygon(self):
-        """ Calculate bounding polygon of the sources in the catalog.
+        """Calculate bounding polygon of the sources in the catalog.
         """
         # create spherical polygon bounding the sources
         self._calc_cat_convex_hull()
@@ -1779,7 +1780,6 @@ Convex_hull/Monotone_chain>`_
 
     Parameters
     ----------
-
     x: list, tuple, numpy.ndarray
         An iterable sequence of ``x``-coordinates of points.
 
@@ -1813,6 +1813,9 @@ Convex_hull/Monotone_chain>`_
         if min_separation < 0:
             raise ValueError("'min_separation' must be non-negative or None.")
 
+    def _format_return(arr1, arr2):
+        return (arr1, arr2) if ndarray else (arr1.tolist(), arr2.tolist())
+
     ndarray = isinstance(x, np.ndarray) or isinstance(y, np.ndarray)
 
     # Sort the points lexicographically (tuples are compared
@@ -1823,16 +1826,14 @@ Convex_hull/Monotone_chain>`_
     # Boring case: no points or a single point,
     # possibly repeated multiple times.
     if len(points) == 0:
-        if ndarray:
-            return (np.array([]), np.array([]))
-        else:
-            return ([], [])
+        return _format_return(np.array([]), np.array([]))
 
     elif len(points) == 1:
         if ndarray:
-            return (np.array([points[0][0]]), np.array([points[0][1]]))
-        else:
-            return ([points[0][0]], [points[0][1]])
+            return _format_return(
+                np.array([points[0][0]]),
+                np.array([points[0][1]])
+            )
 
     # 2D cross product of OA and OB vectors, i.e. z-component of their
     # 3D cross product.
@@ -1875,10 +1876,7 @@ Convex_hull/Monotone_chain>`_
         pty = pty[idx]
 
     if wcs is None:
-        if ndarray:
-            return (ptx, pty)
-        else:
-            return (ptx.tolist(), pty.tolist())
+        return _format_return(ptx, pty)
 
     # convert x, y vertex coordinates to RA & DEC:
     ra, dec = wcs(ptx, pty)
@@ -1890,7 +1888,4 @@ Convex_hull/Monotone_chain>`_
     ra[-1] = ra[0]
     dec[-1] = dec[0]
 
-    if ndarray:
-        return (ra, dec)
-    else:
-        return (ra.tolist(), dec.tolist())
+    return _format_return(ra, dec)

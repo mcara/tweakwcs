@@ -76,7 +76,7 @@ if _MAX_LINALG_TYPE is None:
 
 
 def inv(m):
-    """ This function computes inverse matrix using Gauss-Jordan elimination
+    """This function computes inverse matrix using Gauss-Jordan elimination
     with full pivoting. Computations are performed using ``numpy.longdouble``
     precision. On systems on which ``numpy.longdouble`` is equivalent to
     ``numpy.double`` this function reverts to `numpy.linalg.inv` for
@@ -152,7 +152,7 @@ def inv(m):
         invm[k, :] /= pv
         w = invm[k, :]
 
-        for l in range(k + 1, order):  # noqa: E741
+        for l in range(k + 1, order):  # noqa: RUF100, E741
             pv2 = m[l, k]
             m[l, (k + 1):] -= pv2 * r
             m[l, k] = 0.0

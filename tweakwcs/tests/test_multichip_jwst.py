@@ -1,22 +1,27 @@
-import pytest
-
+import gwcs
 import numpy as np
-from astropy.io import fits
+import pytest
+from gwcs import coordinate_frames as cf
+from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
+
+import tweakwcs
+from astropy import coordinates as coord
 from astropy import table
+from astropy import units as u
 from astropy import wcs as fitswcs
-from astropy.utils.data import get_pkg_data_filename
+from astropy.io import fits
 from astropy.modeling import polynomial
 from astropy.modeling.models import (
-    Shift, AffineTransformation2D, Pix2Sky_TAN, RotateNative2Celestial,
-    Identity, Mapping, Const1D, Scale
+    AffineTransformation2D,
+    Const1D,
+    Identity,
+    Mapping,
+    Pix2Sky_TAN,
+    RotateNative2Celestial,
+    Scale,
+    Shift,
 )
-from astropy import units as u
-from astropy import coordinates as coord
-import gwcs
-from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
-from gwcs import coordinate_frames as cf
-import tweakwcs
-
+from astropy.utils.data import get_pkg_data_filename
 
 _ATOL = 1e3 * np.finfo(np.array([1.]).dtype).eps
 
@@ -32,7 +37,7 @@ def _make_gwcs_wcs(fits_hdr):
     a_coeff = {}
     for i in range(a_order + 1):
         for j in range(a_order + 1 - i):
-            key = 'A_{:d}_{:d}'.format(i, j)
+            key = f'A_{i:d}_{j:d}'
             if key in hdr:
                 a_coeff[key] = hdr[key]
 
@@ -40,7 +45,7 @@ def _make_gwcs_wcs(fits_hdr):
     b_coeff = {}
     for i in range(b_order + 1):
         for j in range(b_order + 1 - i):
-            key = 'B_{:d}_{:d}'.format(i, j)
+            key = f'B_{i:d}_{j:d}'
             if key in hdr:
                 b_coeff[key] = hdr[key]
 

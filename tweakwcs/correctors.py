@@ -9,21 +9,26 @@ of ``WCS``.
 
 """
 import logging
-from copy import deepcopy
 from abc import ABC, abstractmethod
+from copy import deepcopy
 
-import numpy as np
 import gwcs
+import numpy as np
 from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
+
 from astropy.modeling import CompoundModel
 from astropy.modeling.models import (
-    AffineTransformation2D, Scale, Identity, Mapping, Const1D,
-    RotationSequence3D
+    AffineTransformation2D,
+    Const1D,
+    Identity,
+    Mapping,
+    RotationSequence3D,
+    Scale,
 )
 from astropy.utils.decorators import deprecated
 
-from .linalg import inv
 from . import __version__  # noqa: F401
+from .linalg import inv
 
 __author__ = 'Mihai Cara'
 
@@ -76,10 +81,11 @@ def _tp2tp(tpwcs1, tpwcs2, s=None):
 
 
 class WCSCorrector(ABC):
-    """ A class that provides common interface for manipulating WCS information
+    """A class that provides common interface for manipulating WCS information
     and for managing tangent-plane corrections.
 
     """
+
     units = None
 
     def __init__(self, wcs, meta=None):
@@ -99,16 +105,16 @@ class WCSCorrector(ABC):
 
     @property
     def wcs(self):
-        """ Get current WCS object. """
+        """Get current WCS object."""
         return self._wcs
 
     @property
     def original_wcs(self):
-        """ Get original WCS object. """
+        """Get original WCS object."""
         return self._owcs
 
     def copy(self):
-        """ Returns a deep copy of this object. """
+        """Returns a deep copy of this object."""
         return deepcopy(self)
 
     @abstractmethod
@@ -206,9 +212,9 @@ class WCSCorrector(ABC):
         return ra, dec
 
     def tanp_pixel_scale(self, x, y):
-        """ Estimate pixel scale in the tangent plane near a location
-        in the detector's coordinate system given by parameters ``x`` and
-        ``y``.
+        """
+        Estimate pixel scale in the tangent plane near a location in the
+        detector's coordinate system given by parameters ``x`` and ``y``.
 
         Parameters
         ----------
@@ -222,7 +228,6 @@ class WCSCorrector(ABC):
 
         Returns
         -------
-
         pscale: float
             Pixel scale [in units used in the tangent plane coordinate system]
             in the tangent plane near a location specified by detector
@@ -241,7 +246,8 @@ class WCSCorrector(ABC):
 
     @property
     def tanp_center_pixel_scale(self):
-        """ Estimate pixel scale in the tangent plane near a location
+        """
+        Estimate pixel scale in the tangent plane near a location
         in the detector's coordinate system corresponding to the origin of the
         tangent plane.
 
@@ -276,7 +282,8 @@ class WCSCorrector(ABC):
 
 
 class FITSWCSCorrector(WCSCorrector):
-    """ A class for holding ``FITS`` ``WCS`` information and for managing
+    """
+    A class for holding ``FITS`` ``WCS`` information and for managing
     tangent-plane corrections. The units of the tangent plane of this
     corrector are same as detector coordinates.
 
@@ -286,13 +293,13 @@ class FITSWCSCorrector(WCSCorrector):
         supported.
 
     """
+
     units = 'pixel'
 
     def __init__(self, wcs, meta=None):
         """
         Parameters
         ----------
-
         wcs: astropy.wcs.WCS
             An `astropy.wcs.WCS` object.
 
@@ -349,7 +356,7 @@ class FITSWCSCorrector(WCSCorrector):
         # check that pix2foc includes no other distortions besides the ones
         # that we have turned off above:
         if not np.allclose(pts, wcs.pix2foc(pts, 1)):
-            False, "'pix2foc' contains unknown distortions"
+            return False, "Unexpected distortions in 'pix2foc'. Cannot proceed."
 
         wcs.wcs.set()
 
@@ -358,7 +365,7 @@ class FITSWCSCorrector(WCSCorrector):
                            rtol=0):
             return False, "'WCS.pix2foc()' does not include all distortions."
 
-        return True, ''
+        return True, ""
 
     def _get_tanp_center_pixel_scale(self):
         pscale = self.tanp_pixel_scale(*self._wcs.wcs.crpix)
@@ -431,8 +438,8 @@ class FITSWCSCorrector(WCSCorrector):
         wcs.wcs.set()
 
         # initial approximation for CD matrix of the image WCS:
-        (U, u) = self._linearize(orig_wcs, ref_tpwcs, wcs.wcs.crpix,
-                                 matrix, shift, hx=hx, hy=hy)
+        (U, _u) = self._linearize(orig_wcs, ref_tpwcs, wcs.wcs.crpix,
+                                  matrix, shift, hx=hx, hy=hy)
         if hasattr(wcs.wcs, 'pc'):
             wcs.wcs.pc = np.dot(wcs.wcs.pc, U).astype(np.double)
         else:
@@ -495,7 +502,7 @@ class FITSWCSCorrector(WCSCorrector):
         return x, y
 
     def tanp_to_world(self, x, y):
-        """ Convert tangent plane coordinates to world coordinates. """
+        """Convert tangent plane coordinates to world coordinates."""
         ra, dec = self._wcs.wcs_pix2world(x, y, 0)
         return ra, dec
 
@@ -520,7 +527,7 @@ class FITSWCSCorrector(WCSCorrector):
             return self._owcs.pixel_bounds
 
     def _linearize(self, wcsima, ref_tpwcs, imcrpix, f, shift, hx=1.0, hy=1.0):
-        """ linearization using 5-point formula for first order derivative. """
+        """linearization using 5-point formula for first order derivative."""
         x0 = imcrpix[0] - 1
         y0 = imcrpix[1] - 1
 
@@ -550,8 +557,9 @@ class FITSWCSCorrector(WCSCorrector):
 
 
 def _get_submodel(model, name):
-    """ Return the first occurence of a sub-model. Search is performed by
-        model name.
+    """
+    Return the first occurence of a sub-model. Search is performed by
+    model name.
     """
     if not isinstance(model, CompoundModel):
         return model if model.name == name else None
@@ -564,13 +572,15 @@ def _get_submodel(model, name):
 
 
 class ST_V2V3_WCSCorrector(WCSCorrector):
-    """ A class for holding ``GWCS`` information and for managing STScI
+    """
+    A class for holding ``GWCS`` information and for managing STScI
     ``JWST`` and ``Roman`` Space Telescopes V2-V3 tangent-plane corrections.
     The units of the tangent plane of this corrector are ``arcsec`` and
     the axes are not along parallel to the axes of the detector's
     coordinate system.
 
     """
+
     units = 'arcsec'
     corrector_name = 'STScI GWCS V2-V3 tangent-plane linear correction. v1'
 
@@ -602,7 +612,7 @@ class ST_V2V3_WCSCorrector(WCSCorrector):
         """
         valid, message = self._check_wcs_structure(wcs)
         if not valid:
-            raise ValueError("Unsupported WCS structure: {}".format(message))
+            raise ValueError("Unsupported WCS structure: %s", message)
 
         super().__init__(wcs=wcs, meta=meta)
 
@@ -662,9 +672,7 @@ class ST_V2V3_WCSCorrector(WCSCorrector):
     @classmethod
     def _check_tpcorr_structure(cls, tpcorr):
         # implement a more sophisticated check later
-        if tpcorr.name != cls.corrector_name:
-            return False
-        return True
+        return tpcorr.name == cls.corrector_name
 
     def _update_transformations(self):
         # define transformations from detector/world coordinates to
@@ -747,8 +755,7 @@ class ST_V2V3_WCSCorrector(WCSCorrector):
         )
         inv_total_corr.name = f'Inverse {corrector_name}'
 
-        # TODO
-        # re-enable circular inverse definitions once
+        # TODO: re-enable circular inverse definitions once
         # https://github.com/spacetelescope/asdf/issues/744 or
         # https://github.com/spacetelescope/asdf/issues/745 are resolved.
         #
@@ -812,8 +819,8 @@ class ST_V2V3_WCSCorrector(WCSCorrector):
 
     @property
     def ref_angles(self):
-        """ Return a ``wcsinfo``-like dictionary of main WCS parameters. """
-        return {k: v for k, v in self._wcsinfo.items()}
+        """Return a ``wcsinfo``-like dictionary of main WCS parameters."""
+        return dict(self._wcsinfo)
 
     def set_correction(self, matrix=[[1, 0], [0, 1]], shift=[0, 0],
                        ref_tpwcs=None, meta=None, **kwargs):
@@ -920,7 +927,7 @@ class ST_V2V3_WCSCorrector(WCSCorrector):
         # save linear transformation info to the meta attribute:
         super().set_correction(matrix=matrix, shift=shift, meta=meta, **kwargs)
 
-    def _check_wcs_structure(self, wcs):
+    def _check_wcs_structure(self, wcs):  # noqa: PLR0911
         if wcs is None or wcs.pipeline is None:
             return False, "Either WCS or its pipeline is None."
 
@@ -1024,7 +1031,7 @@ class ST_V2V3_WCSCorrector(WCSCorrector):
         return _RAD2ARCSEC * x, _RAD2ARCSEC * y
 
     def tanp_to_world(self, x, y):
-        """ Convert tangent plane coordinates to world coordinates. """
+        """Convert tangent plane coordinates to world coordinates."""
         v2, v3 = self._partial_tpcorr.inverse(
             _ARCSEC2RAD * np.asanyarray(x),
             _ARCSEC2RAD * np.asanyarray(y)
@@ -1054,21 +1061,25 @@ class ST_V2V3_WCSCorrector(WCSCorrector):
 
 
 class JWSTWCSCorrector(ST_V2V3_WCSCorrector):
-    """ A class for holding ``JWST`` ``gWCS`` information and for managing
+    """
+    A class for holding ``JWST`` ``gWCS`` information and for managing
     V2-V3 tangent-plane corrections. The units of the tangent plane of this
     corrector are ``arcsec`` and the axes are not along/parallel to the
     axes of the detector's coordinate system.
     """
+
     units = 'arcsec'
     corrector_name = 'JWST tangent-plane linear correction. v1'
 
 
 class RomanWCSCorrector(ST_V2V3_WCSCorrector):
-    """ A class for holding ``Roman`` ``GWCS`` information and for managing
+    """
+    A class for holding ``Roman`` ``GWCS`` information and for managing
     V2-V3 tangent-plane corrections. The units of the tangent plane of this
     corrector are ``arcsec`` and the axes are not along/parallel to the
     axes of the detector's coordinate system.
     """
+
     units = 'arcsec'
     corrector_name = 'Roman V2-V3 tangent-plane linear correction. v1'
 

@@ -14,10 +14,10 @@ A module that provides utility functions for WCS transformations.
 # hard dependency on jwst pipeline.
 
 import math
+
 import numpy as np
 
 from . import __version__  # noqa: F401
-
 
 __all__ = ['planar_rot_3d']
 

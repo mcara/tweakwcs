@@ -11,18 +11,18 @@ import warnings
 from abc import ABC, abstractmethod
 
 import numpy as np
+from scipy import spatial
+from stsci.stimage import xyxymatch
+
 import astropy
 from astropy.utils.decorators import deprecated
 from astropy.utils.exceptions import AstropyDeprecationWarning
-
-from stsci.stimage import xyxymatch
-from scipy import spatial
 
 from . import __version__  # noqa: F401
 
 __author__ = 'Mihai Cara'
 
-__all__ = ['MatchCatalogs', 'XYXYMatch', 'MatchSourceConfusionError']
+__all__ = ['MatchCatalogs', 'MatchSourceConfusionError', 'XYXYMatch']
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -36,19 +36,14 @@ class MatchSourceConfusionError(RuntimeError):
 
 
 class MatchCatalogs(ABC):
-    """ A class that provides common interface for matching catalogs. """
-
-    def __init__(self):
-        """
-        """
+    """A class that provides common interface for matching catalogs."""
 
     @abstractmethod
     def __call__(self, refcat, imcat, **kwargs):
-        """ Performs catalog matching.
+        """Performs catalog matching.
 
         Parameters
         ----------
-
         refcat: astropy.table.Table
             A reference source catalog. Reference catalog must contain
             ``'TPx'`` and ``'TPy'`` columns that provide undistorted
@@ -71,11 +66,11 @@ class MatchCatalogs(ABC):
             sources in the ``refcat`` and ``imcat`` catalogs accordingly.
 
         """
-        pass
 
 
 class XYXYMatch(MatchCatalogs):
-    """ Catalog source matching in tangent plane. Uses ``xyxymatch``
+    """
+    Catalog source matching in tangent plane. Uses ``xyxymatch``
     algorithm to cross-match sources between this catalog and
     a reference catalog.
 
@@ -88,12 +83,12 @@ class XYXYMatch(MatchCatalogs):
         tangent plane.
 
     """
+
     def __init__(self, searchrad=3.0, separation=0.5, use2dhist=True,
                  xoffset=0.0, yoffset=0.0, tolerance=1.0):
         """
         Parameters
         ----------
-
         searchrad: float, optional
             The search radius for a match (in units of the tangent plane).
 
@@ -152,11 +147,10 @@ class XYXYMatch(MatchCatalogs):
         self._yoffset = float(yoffset)
 
     def __call__(self, refcat, imcat, tp_pscale=1.0, tp_units=None, **kwargs):
-        r""" Performs catalog matching.
+        r"""Performs catalog matching.
 
         Parameters
         ----------
-
         refcat: astropy.table.Table
             A reference source catalog. Reference catalog must contain
             ``'TPx'`` and ``'TPy'`` columns that provide undistorted
@@ -192,6 +186,7 @@ class XYXYMatch(MatchCatalogs):
         MatchSourceConfusionError
             Multiple sources matched a single reference source. Try different
             values for ``tolerance`` and ``separation`` to fix this error.
+
         """
         # Check catalogs:
         if not isinstance(refcat, astropy.table.Table):
@@ -260,9 +255,11 @@ class XYXYMatch(MatchCatalogs):
         if refcat_name is None:
             refcat_name = 'Unnamed'
 
-        log.info("Matching sources from '{:s}' catalog with sources from the "
-                 "reference '{:s}' catalog."
-                 .format(imcat_name, refcat_name))
+        log.info(
+            "Matching sources from '%s' catalog with sources from the "
+            "reference '%s' catalog.",
+            imcat_name, refcat_name
+        )
 
         if self._use2dhist:
             # Determine xyoff (X,Y offset) and tolerance
@@ -318,12 +315,13 @@ def _xy_2dhist(imgxy, refxy, r):
 
 
 def _estimate_2dhist_shift(imgxy, refxy, searchrad=3.0, pscale=1.0, units=None):
-    """ Create a 2D matrix-histogram which contains the delta between each
-        XY position and each UV position. Then estimate initial offset
-        between catalogs.
+    """
+    Create a 2D matrix-histogram which contains the delta between each
+    XY position and each UV position. Then estimate initial offset
+    between catalogs.
 
-        ``pscale`` is used to make bins of size approximately equal to
-        image pixel.
+    ``pscale`` is used to make bins of size approximately equal to
+    image pixel.
 
     """
     log.info("Computing initial guess for X and Y shifts...")
@@ -337,7 +335,8 @@ def _estimate_2dhist_shift(imgxy, refxy, searchrad=3.0, pscale=1.0, units=None):
     if nonzeros == 0:
         # no matches within search radius. Return (0, 0):
         log.warning(
-            f"No matches found within a search radius of {searchrad:g} ({units})."
+            "No matches found within a search radius of %g (%s).",
+            searchrad, units
         )
         return 0.0, 0.0
 
@@ -349,8 +348,9 @@ def _estimate_2dhist_shift(imgxy, refxy, searchrad=3.0, pscale=1.0, units=None):
         yp = pscale * yp - searchrad
 
         log.info(
-            f"Found initial X and Y shifts of {xp:.4g}, {yp:.4g} ({units}) "
-            f"based on a single non-zero bin and {int(maxval):d} matches."
+            "Found initial X and Y shifts of %g, %g (%s) based on a single "
+            "non-zero bin and %d matches.",
+            xp, yp, units, int(maxval)
         )
         return xp, yp
 
@@ -362,7 +362,8 @@ def _estimate_2dhist_shift(imgxy, refxy, searchrad=3.0, pscale=1.0, units=None):
 
     if fit_status.startswith('ERROR'):
         log.warning(
-            f"No valid shift found within a search radius of {searchrad:g} {units}."
+            "No valid shift found within a search radius of %g %s.",
+            searchrad, units
         )
         return 0.0, 0.0
 
@@ -385,22 +386,23 @@ def _estimate_2dhist_shift(imgxy, refxy, searchrad=3.0, pscale=1.0, units=None):
         bkg = zpmat[zpmat_mask].mean()
         sig = maxval / np.sqrt(bkg)
         log.info(
-            f"Found initial X and Y shifts of {xp:.4g}, {yp:.4g} ({units}) "
-            f"with significance of {sig:.4g} and {flux:d} matches."
+            "Found initial X and Y shifts of %g, %g (%s) with significance "
+            "of %g and %d matches.",
+            xp, yp, units, sig, flux
         )
 
     else:
         log.warning("Unable to estimate significance of the detection of the "
                     "initial shift.")
         log.info(
-            f"Found initial X and Y shifts of {xp:.4g}, {yp:.4g} ({units}) "
-            f"with {flux:d} matches."
+            "Found initial X and Y shifts of %g, %g (%s) with %d matches.",
+            xp, yp, units, flux
         )
 
     return xp, yp
 
 
-def _find_peak(data, peak_fit_box=5, mask=None):
+def _find_peak(data, peak_fit_box=5, mask=None):  # noqa: PLR0911
     """
     Find location of the peak in an array. This is done by fitting a second
     degree 2D polynomial to the data within a `peak_fit_box` and computing the
@@ -553,7 +555,7 @@ def _find_peak(data, peak_fit_box=5, mask=None):
         if not np.all(np.isfinite(c)):
             raise np.linalg.LinAlgError("Results of the fit are not finite.")
     except np.linalg.LinAlgError as e:
-        log.warning("Least squares failed!\n{}".format(e))
+        log.warning("Least squares failed!\n%s", e)
 
         # attempt center-of-mass instead:
         coord, fit_status = _center_of_mass(v, d, x1, x2, y1, y2)

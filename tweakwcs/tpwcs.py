@@ -13,12 +13,12 @@ import warnings
 
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
-from .correctors import TPWCS, JWSTgWCS, FITSWCS
 from . import __version__  # noqa: F401
+from .correctors import FITSWCS, TPWCS, JWSTgWCS
 
 __author__ = 'Mihai Cara'
 
-__all__ = ['TPWCS', 'JWSTgWCS', 'FITSWCS']
+__all__ = ['FITSWCS', 'TPWCS', 'JWSTgWCS']
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

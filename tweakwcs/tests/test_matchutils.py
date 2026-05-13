@@ -4,23 +4,28 @@ A module containing unit tests for the `wcsutil` module.
 Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-from itertools import product
 import logging
 import random
-import pytest
-import numpy as np
+from itertools import product
 
-from astropy.table import Table
-from astropy.wcs import WCS
-from astropy.io import fits
-from astropy.utils.data import get_pkg_data_filename
+import numpy as np
+import pytest
 
 import tweakwcs
-from tweakwcs.matchutils import (_xy_2dhist, _estimate_2dhist_shift,
-                                 _find_peak, XYXYMatch, MatchCatalogs,
-                                 MatchSourceConfusionError)
-from .helper_correctors import DummyWCSCorrector
+from astropy.io import fits
+from astropy.table import Table
+from astropy.utils.data import get_pkg_data_filename
+from astropy.wcs import WCS
+from tweakwcs.matchutils import (
+    MatchCatalogs,
+    MatchSourceConfusionError,
+    XYXYMatch,
+    _estimate_2dhist_shift,
+    _find_peak,
+    _xy_2dhist,
+)
 
+from .helper_correctors import DummyWCSCorrector
 
 _ATOL = 10 * np.finfo(np.array([1.]).dtype).eps
 
@@ -69,7 +74,7 @@ def test_find_peak_edge_1pix_valid_strip(along_row):
         mask[:, col] = True
         coord0 = (col, 0)
 
-    coord, fit_status, fit_box = _find_peak(data, peak_fit_box=5, mask=mask)
+    coord, fit_status, _fit_box = _find_peak(data, peak_fit_box=5, mask=mask)
     assert fit_status == 'WARNING:EDGE'
     assert np.allclose(coord, coord0, rtol=0, atol=_ATOL)
 
@@ -84,7 +89,7 @@ def test_find_peak_nodata_peak_is_invalid():
     mask[9, 4] = False
     coord0 = (8, 6.5)
 
-    coord, fit_status, fit_box = _find_peak(data, peak_fit_box=5, mask=mask)
+    coord, fit_status, _fit_box = _find_peak(data, peak_fit_box=5, mask=mask)
     assert fit_status == 'ERROR:NODATA'
     assert np.allclose(coord, coord0, rtol=0, atol=_ATOL)
 
@@ -98,7 +103,7 @@ def test_find_peak_few_data_center_of_mass():
     mask[9, col] = True
     coord0 = (col, 9)
 
-    coord, fit_status, fit_box = _find_peak(data, mask=mask)
+    coord, fit_status, _fit_box = _find_peak(data, mask=mask)
     assert fit_status == 'WARNING:CENTER-OF-MASS'
     assert np.allclose(coord, coord0, rtol=0, atol=_ATOL)
 
@@ -112,7 +117,7 @@ def test_find_peak_few_data_for_center_of_mass():
     data[i - 1, j - 1] = -1.0
     mask[i, j] = True
     mask[i - 1, j - 1] = True
-    coord, fit_status, fit_box = _find_peak(data, peak_fit_box=3, mask=mask)
+    coord, fit_status, _fit_box = _find_peak(data, peak_fit_box=3, mask=mask)
     assert fit_status == 'ERROR:NODATA'
     assert np.allclose(coord, (j, i), rtol=0, atol=_ATOL)
 
@@ -122,7 +127,7 @@ def test_find_peak_negative_peak():
     i = random.choice(range(2, 9))
     j = random.choice(range(2, 9))
     data[i, j] = -1.0
-    coord, fit_status, fit_box = _find_peak(data, peak_fit_box=2)
+    coord, fit_status, _fit_box = _find_peak(data, peak_fit_box=2)
     assert fit_status == 'ERROR:NODATA'
     assert np.allclose(coord, (5, 5), rtol=0, atol=_ATOL)
 
@@ -135,7 +140,7 @@ def test_find_peak_tiny_box_1pix():
     data[2, 2] = 1.0
     coord0 = (2, 2)
 
-    coord, fit_status, fit_box = _find_peak(data, peak_fit_box=5, mask=mask)
+    coord, fit_status, _fit_box = _find_peak(data, peak_fit_box=5, mask=mask)
     assert np.allclose(coord, coord0, rtol=0, atol=_ATOL)
     assert fit_status == 'WARNING:CENTER-OF-MASS'
 
@@ -149,7 +154,7 @@ def test_find_peak_success():
     data = np.zeros((21, 21))
     y, x = np.indices(data.shape)
     data = 100 * np.exp(-0.5 * ((x - 8)**2 + (y - 11)**2))
-    coord, fit_status, fit_box = _find_peak(data, peak_fit_box=3)
+    coord, fit_status, _fit_box = _find_peak(data, peak_fit_box=3)
     assert fit_status == 'SUCCESS'
     assert np.allclose(coord, (8, 11), rtol=0, atol=1e-6)
 
@@ -161,7 +166,7 @@ def test_find_peak_nodata_after_fail():
     data[i, j] = 1.0
     data[i - 1, j - 1] = -1.0
     data[i + 1, j + 1] = np.nan
-    coord, fit_status, fit_box = _find_peak(data, peak_fit_box=5)
+    coord, fit_status, _fit_box = _find_peak(data, peak_fit_box=5)
     assert fit_status == 'SUCCESS'
     shift = 0.53583061889252015
     assert np.allclose(coord, (j + shift, i + shift), rtol=0, atol=20 * _ATOL)
@@ -172,7 +177,7 @@ def test_find_peak_badfit():
     y, x = np.indices(data.shape)
     data = x + y
     data[(x < 5) | (x > 11) | (y < 8) | (y > 14)] = 0
-    coord, fit_status, fit_box = _find_peak(data, peak_fit_box=7)
+    coord, fit_status, _fit_box = _find_peak(data, peak_fit_box=7)
     assert fit_status == 'WARNING:BADFIT'
     assert np.allclose(coord, (9.55681818, 12.55681818), rtol=0, atol=1e-6)
 
@@ -182,14 +187,14 @@ def test_find_peak_fit_over_fitbox_edge():
     y, x = np.indices(data.shape)
     data = 100 * np.exp(-0.5 * (x**2 + (y - 11)**2))
     data[:, 0] = 0.0
-    coord, fit_status, fit_box = _find_peak(data, peak_fit_box=7)
+    coord, fit_status, _fit_box = _find_peak(data, peak_fit_box=7)
     assert fit_status == 'WARNING:CENTER-OF-MASS'
     assert np.allclose(coord, (1.2105026810165653, 11), rtol=0, atol=1e-6)
 
 
 def test_find_peak_sparse_2dhist():
     data = fits.getdata(get_pkg_data_filename('data/sparse-2dhist.fits'))
-    coord, fit_status, fit_box = _find_peak(data, mask=data > 0)
+    coord, fit_status, _fit_box = _find_peak(data, mask=data > 0)
     assert fit_status == 'WARNING:CENTER-OF-MASS'
     assert np.allclose(coord, (35.046728971962615, 35.02803738317757),
                        rtol=0, atol=1e-14)

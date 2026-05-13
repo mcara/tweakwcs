@@ -4,15 +4,15 @@ A module containing unit tests for the `wcsutil` module.
 Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-from itertools import product
 import math
 import sys
+from itertools import product
 
-from astropy.modeling.models import Shift, Rotation2D
 import numpy as np
 import pytest
-from tweakwcs import linearfit, linalg
 
+from astropy.modeling.models import Rotation2D, Shift
+from tweakwcs import linalg, linearfit
 
 _LARGE_SAMPLE_SIZE = 1000
 
@@ -116,7 +116,7 @@ def ideal_large_data(request):
 
 
 @pytest.fixture(scope="function",
-                params=[v for v in product(*(2 * [[False, True]]))])
+                params=list(product(*(2 * [[False, True]]))))
 def weight_data(request):
     nbd = int(_BAD_DATA_FRACTION * _LARGE_SAMPLE_SIZE)
     minv = 1000.0
@@ -373,12 +373,12 @@ def test_fit_general_too_few_points(fit_function, npts):
 
 @pytest.mark.parametrize(
     'clip_accum, noise',
-    [v for v in product(*(2 * [[False, True]]))]
+    list(product(*(2 * [[False, True]])))
 )
 def test_iter_linear_fit_clip_style(ideal_large_data, weight_data,
                                     clip_accum, noise):
     """ Test clipping behavior. Test that weights exclude "bad" data. """
-    uv, xy, angle, scale, shift, rmat, proper, skew, fitgeom = ideal_large_data
+    uv, xy, _angle, _scale, shift, rmat, proper, _skew, fitgeom = ideal_large_data
     wxy, wuv, idx_xy, idx_uv, bd_xy, bd_uv = weight_data
 
     noise_sigma = 0.01

@@ -5,22 +5,20 @@ Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
 import copy
-import pytest
 import random
 
 import numpy as np
+import pytest
 
 from astropy.table import Table
-
-from tweakwcs.linearfit import build_fit_matrix
-from tweakwcs.imalign import (
-    fit_wcs,
-    align_wcs,
-    max_overlap_pair,
-    NotEnoughCatalogs,
-)
 from tweakwcs import FITSWCSCorrector
-
+from tweakwcs.imalign import (
+    NotEnoughCatalogs,
+    align_wcs,
+    fit_wcs,
+    max_overlap_pair,
+)
+from tweakwcs.linearfit import build_fit_matrix
 
 _ATOL = 1000 * np.finfo(np.array([1.]).dtype).eps
 
@@ -90,7 +88,7 @@ def test_fit_drop_empty(mock_fits_wcs):
         assert status[6] == 'SUCCESS'
 
     else:
-        assert False
+        pytest.fail(f"Unexpected fit status for wcscats[1]: {status[1]}")
 
 
 def test_fit_wcs_missing_req_col_names(empty_refcat, mock_fits_wcs):

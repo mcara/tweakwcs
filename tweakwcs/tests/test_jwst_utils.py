@@ -29,7 +29,7 @@ def data_model_list():
         m.meta.observation.exposure_number = '1'
         m.meta.instrument.name = 'NIRCAM'
         m.meta.instrument.channel = 'SHORT'
-        m.meta.filename = 'file{:d}.fits'.format(k)
+        m.meta.filename = f'file{k:d}.fits'
         models.append(m)
 
     models[-3].meta.observation.observation_number = '2'
@@ -54,7 +54,7 @@ def defective_data_model():
         def tweakwcs_group_id(self, v):
             dict.__setitem__(self, 'tweakwcs_group_id', v)
 
-    class BrokenModel():
+    class BrokenModel:
         def __init__(self):
             self._meta = DummyMeta()
 

@@ -11,28 +11,27 @@ sets of 2D points.
 import logging
 import numbers
 
-import astropy
 import numpy as np
 from packaging.version import Version
 
-if Version(astropy.__version__) >= Version('5.1'):
-    from astropy.modeling.fitting import fitter_to_model_params
-    from astropy.modeling.fitting import LMLSQFitter
-else:
-    from astropy.modeling.fitting import (_fitter_to_model_params as
-                                          fitter_to_model_params)
-    from astropy.modeling.fitting import LevMarLSQFitter as LMLSQFitter
+import astropy
 
-from . linalg import inv
+if Version(astropy.__version__) >= Version('5.1'):
+    from astropy.modeling.fitting import LMLSQFitter, fitter_to_model_params
+else:
+    from astropy.modeling.fitting import LevMarLSQFitter as LMLSQFitter
+    from astropy.modeling.fitting import _fitter_to_model_params as fitter_to_model_params
+
 from . import __version__  # noqa: F401
+from .linalg import inv
 
 __author__ = 'Mihai Cara, Warren Hack'
 
 __all__ = [
-    'iter_linear_fit',
-    'build_fit_matrix',
     'SUPPORTED_FITGEOM_MODES',
     '_LevMarLSQFitter2x2',
+    'build_fit_matrix',
+    'iter_linear_fit',
 ]
 
 # Supported fitgeom modes and corresponding minobj
@@ -53,8 +52,7 @@ log.setLevel(logging.DEBUG)
 
 
 class SingularMatrixError(Exception):
-    """ An error class used to report when a singular matrix is encountered."""
-    pass
+    """An error class used to report when a singular matrix is encountered."""
 
 
 class NotEnoughPointsError(Exception):
@@ -62,7 +60,6 @@ class NotEnoughPointsError(Exception):
     An error class used to report when there are not enough points to
     find parameters of a linear transformation.
     """
-    pass
 
 
 def iter_linear_fit(xy, uv, wxy=None, wuv=None,
@@ -250,7 +247,7 @@ def iter_linear_fit(xy, uv, wxy=None, wuv=None,
                                  "out-of-sync with SUPPORTED_FITGEOM_MODES.")
 
     except KeyError:
-        raise ValueError("Unsupported 'fitgeom' value: '{}'".format(fitgeom))
+        raise ValueError(f"Unsupported 'fitgeom' value: '{fitgeom}'")
 
     xy = np.array(xy, dtype=np.longdouble)
     uv = np.array(uv, dtype=np.longdouble)
@@ -319,7 +316,7 @@ def iter_linear_fit(xy, uv, wxy=None, wuv=None,
     xy[mask] -= center_ld
     uv[mask] -= center_ld
 
-    log.info("Performing '{:s}' fit".format(fitgeom))
+    log.info("Performing '%s' fit", fitgeom)
 
     # initial fit:
     wmxy = None if wxy is None else wxy[mask]
@@ -389,7 +386,7 @@ def _compute_stat(fit, residuals, weights):
 
 
 def fit_shifts(xy, uv, wxy=None, wuv=None):
-    """ Fits (non-iteratively and without sigma-clipping) a displacement
+    """Fits (non-iteratively and without sigma-clipping) a displacement
     transformation only between input lists of positions ``xy`` and ``uv``.
     When weights are provided, a weighted fit is performed. Parameter
     descriptions and return values are identical to those in `iter_linear_fit`,
@@ -451,7 +448,7 @@ def fit_shifts(xy, uv, wxy=None, wuv=None):
 # by Warren Hack. Support for axis flips and for constraining scale
 # added by Mihai Cara.
 def fit_rscale(xy, uv, wxy=None, wuv=None, scale=None):
-    """ Fits (non-iteratively and without sigma-clipping) a displacement,
+    """Fits (non-iteratively and without sigma-clipping) a displacement,
     rotation and (optionally) scale transformations between input lists of
     positions ``xy`` and ``uv``. When weights are provided, a weighted fit
     is performed. Parameter descriptions and return values are identical to
@@ -604,7 +601,7 @@ def fit_rscale(xy, uv, wxy=None, wuv=None, scale=None):
 
 
 def fit_rshift(xy, uv, wxy=None, wuv=None):
-    """ Fits (non-iteratively and without sigma-clipping) a displacement,
+    """Fits (non-iteratively and without sigma-clipping) a displacement,
     rotation between input lists of positions ``xy`` and ``uv``. When weights
     are provided, a weighted fit is performed. Parameter descriptions and
     return values are identical to those in `iter_linear_fit`, except
@@ -619,7 +616,7 @@ def fit_rshift(xy, uv, wxy=None, wuv=None):
 
 
 def fit_general(xy, uv, wxy=None, wuv=None):
-    """ Fits (non-iteratively and without sigma-clipping) a displacement,
+    """Fits (non-iteratively and without sigma-clipping) a displacement,
     rotation, scale, and skew transformations (i.e., the full ``2x2``
     transformation matrix) between input lists of positions
     ``xy`` and ``uv``. When weights are provided, a weighted fit is performed.
@@ -851,7 +848,8 @@ def build_fit_matrix(rot, scale=1):
 
 
 class _LevMarLSQFitter2x2(LMLSQFitter):
-    """ Performs fits of 2D vector-models to 2D reference points. """
+    """Performs fits of 2D vector-models to 2D reference points."""
+
     def objective_function(self, fps, *args, **kwargs):
         model, weights, inputs, meas, *_ = args
         fitter_to_model_params(model, fps)

@@ -26,13 +26,12 @@ import uuid
 # LOCAL
 from .. import __version__  # noqa: F401
 
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
 def assign_jwst_tweakwcs_groups(images):
-    """ Assign group IDs to ``JWST`` images.
+    """Assign group IDs to ``JWST`` images.
 
     Parameters
     ----------
@@ -80,9 +79,9 @@ def assign_jwst_tweakwcs_groups(images):
         except Exception as e:
             gid = 'None'
             log.warning("Unable to assign a 'tweakwcs_group_id' to image "
-                        "'{}' due to '{}'".format(model.meta['filename'], e))
-            log.warning("'tweakwcs_group_id' for image '{}' will be set "
-                        "to None".format(model.meta['filename']))
+                        "'%s' due to '%s'", model.meta['filename'], e)
+            log.warning("'tweakwcs_group_id' for image '%s' will be set "
+                        "to None", model.meta['filename'])
 
         finally:
             if "tweakwcs_group_id" not in model.meta:  # pragma: no branch

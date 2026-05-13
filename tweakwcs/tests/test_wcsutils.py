@@ -4,10 +4,10 @@ A module containing unit tests for the `wcsutil` module.
 Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-import pytest
-
 import numpy as np
-from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
+import pytest
+from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
+
 from tweakwcs import wcsutils
 
 _S2C = SphericalToCartesian(name='s2c', wrap_lon_at=180)

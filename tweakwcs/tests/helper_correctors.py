@@ -5,15 +5,16 @@ Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
 import math
+
+import gwcs
 import numpy as np
-from astropy.modeling import Model, Parameter
-from astropy.modeling.models import AffineTransformation2D, Identity
+from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
+
 from astropy import coordinates as coord
 from astropy import units as u
-import gwcs
-from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
+from astropy.modeling import Model, Parameter
+from astropy.modeling.models import AffineTransformation2D, Identity
 from tweakwcs.correctors import WCSCorrector
-
 
 _S2C = SphericalToCartesian(name='s2c', wrap_lon_at=180)
 _C2S = CartesianToSpherical(name='c2s', wrap_lon_at=180)
@@ -86,9 +87,9 @@ def create_V2V3ToDet(corr_cls, v2ref=0.0, v3ref=0.0, roll=0.0,
 
 
 class V2V3ToSky(Model):
+    """Rotates V2-V3 sphere on the sky.
     """
-    Rotates V2-V3 sphere on the sky.
-    """
+
     angles = Parameter()
 
     _separable = False
@@ -113,17 +114,16 @@ class V2V3ToSky(Model):
 
     @staticmethod
     def cartesian2spherical(x, y, z):
-        """ Convert cartesian coordinates to spherical (in deg). """
+        """Convert cartesian coordinates to spherical (in deg)."""
         return _C2S(x, y, z)
 
     @staticmethod
     def spherical2cartesian(alpha, delta):
-        """ Convert spherical coordinates (in deg) to cartesian. """
+        """Convert spherical coordinates (in deg) to cartesian."""
         return _S2C(alpha, delta)
 
     def evaluate(self, v2, v3, angles):
-        """ Evaluate the model on some input variables. """
-
+        """Evaluate the model on some input variables."""
         # convert spherical coordinates to cartesian assuming unit sphere:
         xyz = self.spherical2cartesian(v2.ravel() / 3600., v3.ravel() / 3600.0)
 
@@ -150,6 +150,7 @@ class V2V3ToSkyInv(Model):
     """
     Rotates V2-V3 sphere on the sky.
     """
+
     angles = Parameter()
 
     _separable = False
@@ -174,17 +175,16 @@ class V2V3ToSkyInv(Model):
 
     @staticmethod
     def cartesian2spherical(x, y, z):
-        """ Convert cartesian coordinates to spherical (in deg). """
+        """Convert cartesian coordinates to spherical (in deg)."""
         return _C2S(x, y, z)
 
     @staticmethod
     def spherical2cartesian(alpha, delta):
-        """ Convert spherical coordinates (in deg) to cartesian. """
+        """Convert spherical coordinates (in deg) to cartesian."""
         return _S2C(alpha, delta)
 
     def evaluate(self, v2, v3, angles):
-        """ Evaluate the model on some input variables. """
-
+        """Evaluate the model on some input variables."""
         # convert spherical coordinates to cartesian assuming unit sphere:
         xyz = self.spherical2cartesian(v2.ravel(), v3.ravel())
 

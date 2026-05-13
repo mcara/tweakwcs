@@ -4,8 +4,8 @@ A module containing unit tests for the `linalg` module.
 Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-import pytest
 import numpy as np
+import pytest
 
 from tweakwcs import linalg, linearfit
 
