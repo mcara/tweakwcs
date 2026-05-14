@@ -97,7 +97,7 @@ class XYXYMatch(MatchCatalogs):
         separation: float, optional
             The  minimum  separation in the tangent plane (in units of
             the tangent plane) for sources in the image and reference
-            catalogs in order to be considered to be disctinct sources.
+            catalogs in order to be considered to be distinct sources.
             Objects closer together than ``separation`` distance
             are removed from the image and reference coordinate catalogs prior
             to matching. This parameter gets passed directly to
@@ -429,11 +429,11 @@ def _find_peak(data, peak_fit_box=5, mask=None):  # noqa: PLR0911
         - ``'ERROR:NODATA'``: Not enough valid data to perform the fit; The
           returned coordinate is the center of input array;
         - ``'WARNING:EDGE'``: Peak lies on the edge of the input array.
-          Returned coordinates are the result of a discreet search;
+          Returned coordinates are the result of a discrete search;
         - ``'WARNING:BADFIT'``: Performed fid did not find a maximum or the
           estimated maximum is outside of the fit box. Returned
           coordinates are the result of either a center-of-mass estimate or
-          a discreet search;
+          a discrete search;
         - ``'WARNING:CENTER-OF-MASS'``: Returned coordinates are the result
           of a center-of-mass estimate instead of a polynomial fit. This is
           either due to too few points to perform a fit, polynomial peak being

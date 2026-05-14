@@ -276,7 +276,7 @@ def fit_wcs(
     )
     wrefcat = RefCatalog(refcat, name=imcat.meta.get("name", "Unnamed"))
 
-    succes = wgcat.align_to_ref(
+    success = wgcat.align_to_ref(
         refcat=wrefcat,
         ref_tpwcs=ref_tpwcs,
         match=None,
@@ -288,7 +288,7 @@ def fit_wcs(
     )
 
     corrector.meta["fit_info"] = wimcat.fit_info
-    if not succes:
+    if not success:
         log.warning("Failed to align catalog '%s'.", wgcat.name)
 
     # log running time:
@@ -490,7 +490,7 @@ def align_wcs(
         This exception is raised when there are not enough input catalogs
         to perform alignment. For example, ``wcscat`` must be a list of at least
         two correctors when ``refcat`` is `None`, or be a single corrector
-        when a refernce catalog is provided via ``refcat``.
+        when a reference catalog is provided via ``refcat``.
 
     Notes
     -----
@@ -796,7 +796,7 @@ def max_overlap_pair(images, enforce_user_order):
     Return a pair of images with the largest overlap.
 
     .. warning::
-        Returned pair of images is "poped" from input ``images`` list and
+        Returned pair of images is "popped" from input ``images`` list and
         therefore on return ``images`` will contain a smaller number of
         elements.
 
@@ -871,7 +871,7 @@ def max_overlap_image(refimage, images, enforce_user_order):
     overlap with the ``refimage`` image.
 
     .. warning::
-        Returned image of images is "poped" from input ``images`` list and
+        Returned image of images is "popped" from input ``images`` list and
         therefore on return ``images`` will contain a smaller number of
         elements.
 
@@ -911,7 +911,7 @@ def _max_overlap_pair(images, enforce_user_order):
     Return a pair of images with the largest overlap.
 
     .. warning::
-        Returned pair of images is "poped" from input ``images`` list and
+        Returned pair of images is "popped" from input ``images`` list and
         therefore on return ``images`` will contain a smaller number of
         elements.
 
@@ -988,7 +988,7 @@ def _max_overlap_image(refimage, images, enforce_user_order):
     overlap with the ``refimage`` image.
 
     .. warning::
-        Returned image of images is "poped" from input ``images`` list and
+        Returned image of images is "popped" from input ``images`` list and
         therefore on return ``images`` will contain a smaller number of
         elements.
 

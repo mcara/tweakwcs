@@ -8,7 +8,7 @@ and other functions from the ``imalign`` module to
 identify images that should be treated together as a group when "tweaking"
 their ``WCS``. That is, all images within a group will have the same
 correction applied to their ``WCS``\ es. This is often the case with images
-that come from differenct chips of the same sensor chip assembly (SCA).
+that come from different chips of the same sensor chip assembly (SCA).
 
 .. note::
     Grouping logic/algorithms are inherently telescope and instrument

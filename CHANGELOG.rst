@@ -53,7 +53,7 @@ Release Notes
   when there are not enough input catalogs to perform alignment. [#203]
 
 - ``XYXYMatch`` now will raise a custom exception of type
-  ``MatchSourceConfusionError`` when multipe reference sources match a single
+  ``MatchSourceConfusionError`` when multiple reference sources match a single
   input source. [#204]
 
 
@@ -106,7 +106,7 @@ Release Notes
 =====================
 
 - Added ``bb_policy`` argument to the ``WCSGroupCatalog`` to control when
-  to switch to an aproximate method of computing of the bounding polygon of
+  to switch to an approximate method of computing of the bounding polygon of
   a group of images. The default value is set to 50. Also added equivalent
   ``group_bb_policy`` argument to both ``fit_wcs`` and ``align_wcs``
   functions. [#176]
@@ -342,7 +342,7 @@ in the convex hull issue to make the code more robust.
   containing only two sources. [#84]
 
 - Fixed a bug in ``convex_hull()`` resulting in incorrect type being returned
-  in case of empty input coordinate lists or whne only one point
+  in case of empty input coordinate lists or when only one point
   is provided. [#84]
 
 - Implemented a more robust estimate of the maximum type supported by

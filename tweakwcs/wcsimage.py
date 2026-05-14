@@ -201,7 +201,7 @@ class WCSImageCatalog:
         Get/Set fit status. This property is a shortcut to the ``'status'``
         key value in the ``fit_info`` dictionary. When the
         :py:class:`WCSImageCatalog` object is created, ``fit_status`` is
-        initially set to ``'SKIPPED'``. Alignment tools are reponsible for
+        initially set to ``'SKIPPED'``. Alignment tools are responsible for
         updating catalog's fit status.
 
         """
@@ -406,13 +406,18 @@ class WCSImageCatalog:
 
         if stepsize is None:
             nintx = 3
-            ninty = 3
+            ninty = 3  # codespell:ignore ninty
         else:
             nintx = max(2, int(np.ceil((hx - lx) / stepsize)))
-            ninty = max(2, int(np.ceil((hy - ly) / stepsize)))
+            ninty = max(2, int(np.ceil((hy - ly) / stepsize)))  # codespell:ignore ninty
 
         xs = np.linspace(lx, hx, nintx + 1, dtype=np.double).tolist()
-        ys = np.linspace(ly, hy, ninty + 1, dtype=np.double).tolist()[1:-1]
+        ys = np.linspace(
+            ly,
+            hy,
+            ninty + 1,  # codespell:ignore ninty
+            dtype=np.double,
+        ).tolist()[1:-1]
         nptx = len(xs)
         npty = len(ys)
 
@@ -1252,7 +1257,7 @@ class WCSGroupCatalog:
 
         .. note::
             A ``'SUCCESS'`` status does not indicate a "good" alignment. It
-            simply indicates that alignment algortithm has completed without
+            simply indicates that alignment algorithm has completed without
             errors. Use other fields to evaluate alignment: fit ``RMSE``
             and ``MAE`` values, number of matched sources, etc.
 
@@ -1415,7 +1420,7 @@ class WCSGroupCatalog:
 class RefCatalog:
     """
     An object that holds a reference catalog and provides
-    tools for coordinate convertions using reference WCS as well as
+    tools for coordinate conversions using reference WCS as well as
     catalog manipulation and expansion.
 
     """
@@ -1654,7 +1659,7 @@ class RefCatalog:
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
         #       previous two lines). Then SphericalPolygon fails because
-        #       points are not closed. Threfore we force it to be closed:
+        #       points are not closed. Therefore we force it to be closed:
         ra[-1] = ra[0]
         dec[-1] = dec[0]
 
@@ -1758,7 +1763,7 @@ Convex_hull/Monotone_chain>`_
         specifies the minimum separation in both ``x`` and ``y`` coordinates
         between adjacent verices in the hull. Vertices too close to their
         neighbors will be removed. This operation is performed _before_
-        convertion to "world" coordinates. When ``min_separation`` is `None`,
+        conversion to "world" coordinates. When ``min_separation`` is `None`,
         all vertices are kept.
 
     Returns
@@ -1845,7 +1850,7 @@ Convex_hull/Monotone_chain>`_
     # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
     #       dec[0] != dec[-1] (even though we close the polygon in the
     #       previous two lines). Then SphericalPolygon fails because
-    #       points are not closed. Threfore we force it to be closed:
+    #       points are not closed. Therefore we force it to be closed:
     ra[-1] = ra[0]
     dec[-1] = dec[0]
 

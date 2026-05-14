@@ -562,7 +562,7 @@ class FITSWCSCorrector(WCSCorrector):
 
 def _get_submodel(model, name):
     """
-    Return the first occurence of a sub-model. Search is performed by
+    Return the first occurrence of a sub-model. Search is performed by
     model name.
     """
     if not isinstance(model, CompoundModel):
