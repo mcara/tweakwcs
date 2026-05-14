@@ -8,6 +8,7 @@ source catalogs.
 :License: :doc:`LICENSE`
 
 """
+
 import logging
 import numbers
 import os
@@ -27,21 +28,20 @@ from .linalg import inv
 from .linearfit import SUPPORTED_FITGEOM_MODES, iter_linear_fit
 from .wcsutils import planar_rot_3d
 
-__author__ = 'Mihai Cara'
+__author__ = "Mihai Cara"
 
-__all__ = ['RefCatalog', 'WCSGroupCatalog', 'WCSImageCatalog', 'convex_hull']
+__all__ = ["RefCatalog", "WCSGroupCatalog", "WCSImageCatalog", "convex_hull"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-_S2C = SphericalToCartesian(name='s2c', wrap_lon_at=180)
-_C2S = CartesianToSpherical(name='c2s', wrap_lon_at=180)
+_S2C = SphericalToCartesian(name="s2c", wrap_lon_at=180)
+_C2S = CartesianToSpherical(name="c2s", wrap_lon_at=180)
 
 
 def _is_int(n):
-    return (
-        (isinstance(n, numbers.Integral) and not isinstance(n, bool)) or
-        (isinstance(n, np.generic) and np.issubdtype(n, np.integer))
+    return (isinstance(n, numbers.Integral) and not isinstance(n, bool)) or (
+        isinstance(n, np.generic) and np.issubdtype(n, np.integer)
     )
 
 
@@ -57,7 +57,7 @@ class WCSImageCatalog:
 
     """
 
-    @deprecated_renamed_argument('tpwcs', 'corrector', since='0.8.0')
+    @deprecated_renamed_argument("tpwcs", "corrector", since="0.8.0")
     def __init__(self, catalog, corrector, name=None, group_id=None, meta={}):
         """
         Parameters
@@ -95,7 +95,7 @@ class WCSImageCatalog:
         self.img_bounding_dec = None
 
         self.meta = dict(meta)
-        self._fit_info = {'status': 'SKIPPED'}
+        self._fit_info = {"status": "SKIPPED"}
 
         self.corrector = corrector
         self.catalog = catalog
@@ -103,18 +103,17 @@ class WCSImageCatalog:
 
     @property
     def poly_area(self):
-        """Area of the bounding polygon (in srad).
-        """
+        """Area of the bounding polygon (in srad)."""
         return self._poly_area
 
     @property
-    @deprecated("0.8.0", obj_type='property')
+    @deprecated("0.8.0", obj_type="property")
     def tpwcs(self):
         """Get :py:class:`WCSCorrector` WCS."""
         return self._corr
 
     @tpwcs.setter
-    @deprecated("0.8.0", obj_type='property')
+    @deprecated("0.8.0", obj_type="property")
     def tpwcs(self, tpwcs):
         """Get/Set catalog's WCS (a :py:class:`WCSCorrector`-derived object).
 
@@ -129,8 +128,7 @@ class WCSImageCatalog:
 
         """
         if not isinstance(tpwcs, WCSCorrector):
-            raise TypeError("Unsupported 'tpwcs' type. "
-                            "'tpwcs' must be a subtype of WCSCorrector.")
+            raise TypeError("Unsupported 'tpwcs' type. 'tpwcs' must be a subtype of WCSCorrector.")
         self._corr = tpwcs
 
         # create spherical polygon bounding the image
@@ -156,8 +154,9 @@ class WCSImageCatalog:
 
         """
         if not isinstance(corrector, WCSCorrector):
-            raise TypeError("Unsupported 'corrector' type. "
-                            "'corrector' must be a subtype of WCSCorrector.")
+            raise TypeError(
+                "Unsupported 'corrector' type. 'corrector' must be a subtype of WCSCorrector."
+            )
         self._corr = corrector
 
         # create spherical polygon bounding the image
@@ -175,7 +174,7 @@ class WCSImageCatalog:
 
     @name.setter
     def name(self, name):
-        self._name = 'Unknown' if name is None else str(name)
+        self._name = "Unknown" if name is None else str(name)
 
     @property
     def group_id(self):
@@ -206,11 +205,11 @@ class WCSImageCatalog:
         updating catalog's fit status.
 
         """
-        return self._fit_info['status']
+        return self._fit_info["status"]
 
     @fit_status.setter
     def fit_status(self, fit_status):
-        self._fit_info['status'] = fit_status
+        self._fit_info["status"] = fit_status
 
     @property
     def fit_info(self):
@@ -232,15 +231,14 @@ class WCSImageCatalog:
             self._catalog = None
             return
 
-        if 'x' not in catalog.colnames or 'y' not in catalog.colnames:
-            raise ValueError("An image catalog must contain 'x' and 'y' "
-                             "columns!")
+        if "x" not in catalog.colnames or "y" not in catalog.colnames:
+            raise ValueError("An image catalog must contain 'x' and 'y' columns!")
 
         self._catalog = table.Table(catalog.copy(), masked=True)
-        self._catalog.meta['name'] = self._name
+        self._catalog.meta["name"] = self._name
 
-        if 'id' not in self._catalog.colnames:  # pragma: no branch
-            self._catalog['id'] = np.arange(1, len(self._catalog) + 1)
+        if "id" not in self._catalog.colnames:  # pragma: no branch
+            self._catalog["id"] = np.arange(1, len(self._catalog) + 1)
 
         # create spherical polygon bounding the image
         self.calc_bounding_polygon()
@@ -291,8 +289,7 @@ class WCSImageCatalog:
 
     @property
     def polygon(self):
-        """Get image's (or catalog's) bounding spherical polygon.
-        """
+        """Get image's (or catalog's) bounding spherical polygon."""
         return self._polygon
 
     def intersection(self, wcsim):
@@ -329,9 +326,9 @@ class WCSImageCatalog:
     #       is fixed.
     #
     # def intersection_area(self, wcsim):
-        # """ Calculate the area of the intersection polygon.
-        # """
-        # return np.fabs(self.intersection(wcsim).area())
+    # """ Calculate the area of the intersection polygon.
+    # """
+    # return np.fabs(self.intersection(wcsim).area())
     def intersection_area(self, wcsim):
         """Calculate the area of the intersection polygon."""
         if isinstance(wcsim, (WCSImageCatalog, RefCatalog)):
@@ -341,9 +338,7 @@ class WCSImageCatalog:
             # this is bug workaround for image groups (multi-unions):
             area = 0.0
             for wim in wcsim:
-                area += np.fabs(
-                    self.polygon.intersection(wim.polygon).area()
-                )
+                area += np.fabs(self.polygon.intersection(wim.polygon).area())
             return area
 
     def _guarded_intersection_area(self, wcsim):
@@ -371,9 +366,7 @@ class WCSImageCatalog:
             nfailures = 0
             for wim in wcsim:
                 try:
-                    area += np.fabs(
-                        self.polygon.intersection(wim.polygon).area()
-                    )
+                    area += np.fabs(self.polygon.intersection(wim.polygon).area())
                 except MalformedPolygonError:
                     nfailures += 1
                     continue
@@ -399,8 +392,8 @@ class WCSImageCatalog:
             # just take max image coordinates from catalogs as bounds:
             lx = -0.5
             ly = -0.5
-            hx = max(1, int(np.ceil(np.amax(self._catalog['x'])))) - 0.5
-            hy = max(1, int(np.ceil(np.amax(self._catalog['y'])))) - 0.5
+            hx = max(1, int(np.ceil(np.amax(self._catalog["x"])))) - 0.5
+            hy = max(1, int(np.ceil(np.amax(self._catalog["y"])))) - 0.5
 
         else:
             ((lx, hx), (ly, hy)) = self.corrector.bounding_box
@@ -464,8 +457,8 @@ class WCSImageCatalog:
         if self.corrector is None or self.catalog is None:
             return
 
-        x = self.catalog['x']
-        y = self.catalog['y']
+        x = self.catalog["x"]
+        y = self.catalog["y"]
 
         if len(x) == 0:
             # no points
@@ -474,11 +467,7 @@ class WCSImageCatalog:
             )
 
         elif len(x) > 2:
-            ra, dec = convex_hull(
-                x, y,
-                wcs=self.det_to_world,
-                min_separation=1e-11
-            )
+            ra, dec = convex_hull(x, y, wcs=self.det_to_world, min_separation=1e-11)
             # else, for len(x) in [1, 2], use entire image footprint.
             # TODO: a more robust algorithm should be implemented to deal with
             #       len(x) in [1, 2] cases.
@@ -520,7 +509,7 @@ class WCSGroupCatalog:
 
     bb_approx_threshold = 50
 
-    def __init__(self, images, name=None, bb_policy='auto'):
+    def __init__(self, images, name=None, bb_policy="auto"):
         """
         Parameters
         ----------
@@ -548,41 +537,41 @@ class WCSGroupCatalog:
         if isinstance(images, WCSImageCatalog):
             self._images = [images]
             if images.catalog is None:
-                raise ValueError("Each input WCS image catalog must have a "
-                                 "valid catalog.")
+                raise ValueError("Each input WCS image catalog must have a valid catalog.")
 
-        elif hasattr(images, '__iter__'):
+        elif hasattr(images, "__iter__"):
             if not images:
                 raise ValueError("List of images cannot be empty.")
 
             self._images = []
             for im in images:
                 if not isinstance(im, WCSImageCatalog):
-                    raise TypeError("Each element of the 'images' parameter "
-                                    "must be an 'WCSImageCatalog' object.")
+                    raise TypeError(
+                        "Each element of the 'images' parameter "
+                        "must be an 'WCSImageCatalog' object."
+                    )
                 if im.catalog is None:
-                    raise ValueError("Each input WCS image catalog must have "
-                                     "a valid catalog.")
+                    raise ValueError("Each input WCS image catalog must have a valid catalog.")
                 self._images.append(im)
 
         else:
-            raise TypeError("Parameter 'images' must be either a single "
-                            "'WCSImageCatalog' object or a list of "
-                            "'WCSImageCatalog' objects")
+            raise TypeError(
+                "Parameter 'images' must be either a single "
+                "'WCSImageCatalog' object or a list of "
+                "'WCSImageCatalog' objects"
+            )
 
         self._catalog = self.create_group_catalog()
         self.update_bounding_polygon()
 
     @property
     def poly_area(self):
-        """Area of the bounding polygon (in srad).
-        """
+        """Area of the bounding polygon (in srad)."""
         return self._poly_area
 
     @property
     def name(self):
-        """Get/set :py:class:`WCSImageCatalog` object's name.
-        """
+        """Get/set :py:class:`WCSImageCatalog` object's name."""
         return self._name
 
     @name.setter
@@ -598,24 +587,22 @@ class WCSGroupCatalog:
 
     @bb_policy.setter
     def bb_policy(self, bb_policy):
-        if bb_policy == 'auto':
+        if bb_policy == "auto":
             self._bb_threshold = WCSGroupCatalog.bb_approx_threshold
-        elif bb_policy == 'exact':
+        elif bb_policy == "exact":
             self._bb_threshold = sys.maxsize
         elif _is_int(bb_policy) and bb_policy >= 0:
             self._bb_threshold = bb_policy
         else:
             raise ValueError(
-                "'bb_policy' must be either 'auto', 'exact', or "
-                "a non-negative integer number."
+                "'bb_policy' must be either 'auto', 'exact', or a non-negative integer number."
             )
 
         self._bb_policy = bb_policy
 
     @property
     def polygon(self):
-        """Get image's (or catalog's) bounding spherical polygon.
-        """
+        """Get image's (or catalog's) bounding spherical polygon."""
         return self._polygon
 
     def intersection(self, wcsim):
@@ -652,12 +639,11 @@ class WCSGroupCatalog:
     #       is fixed.
     #
     # def intersection_area(self, wcsim):
-        # """ Calculate the area of the intersection polygon.
-        # """
-        # return np.fabs(self.intersection(wcsim).area())
+    # """ Calculate the area of the intersection polygon.
+    # """
+    # return np.fabs(self.intersection(wcsim).area())
     def intersection_area(self, wcsim):
-        """Calculate the area of the intersection polygon.
-        """
+        """Calculate the area of the intersection polygon."""
         return sum(im.intersection_area(wcsim) for im in self._images)
 
     def _guarded_intersection_area(self, wcsim):
@@ -700,12 +686,7 @@ class WCSGroupCatalog:
             tpx.extend(tx)
             tpy.extend(ty)
 
-        ra, dec = convex_hull(
-            tpx,
-            tpy,
-            wcs=tanplane_wcs.tanp_to_world,
-            min_separation=1e-11
-        )
+        ra, dec = convex_hull(tpx, tpy, wcs=tanplane_wcs.tanp_to_world, min_separation=1e-11)
 
         self.img_bounding_ra = ra
         self.img_bounding_dec = dec
@@ -714,8 +695,7 @@ class WCSGroupCatalog:
         self._poly_area = np.fabs(self._polygon.area())
 
     def update_bounding_polygon(self):
-        """Recompute bounding polygons of the member images.
-        """
+        """Recompute bounding polygons of the member images."""
         if len(self._images) > self._bb_threshold:
             self._aproximate_bb()
             return
@@ -750,8 +730,7 @@ class WCSGroupCatalog:
 
     @property
     def catalog(self):
-        """Get/set image's catalog.
-        """
+        """Get/set image's catalog."""
         return self._catalog
 
     def create_group_catalog(self):
@@ -773,51 +752,42 @@ class WCSGroupCatalog:
             if catlen == 0:
                 continue
 
-            cat_name = image.catalog.meta.get(
-                'name',
-                image.name or 'Unnamed'
-            )
+            cat_name = image.catalog.meta.get("name", image.name or "Unnamed")
             cat_names.append(cat_name)
 
             if has_weights is None:
-                has_weights = 'weight' in image.catalog.colnames
-            elif has_weights != ('weight' in image.catalog.colnames):
-                raise KeyError("Non-empty catalogs in a group must all "
-                               "either have or not have 'weight' column.")
+                has_weights = "weight" in image.catalog.colnames
+            elif has_weights != ("weight" in image.catalog.colnames):
+                raise KeyError(
+                    "Non-empty catalogs in a group must all "
+                    "either have or not have 'weight' column."
+                )
 
             if image.name is None:
                 catname = f"Catalog #{catno:d}"
             else:
                 catname = image.name
 
-            col_catname = table.MaskedColumn(catlen * [catname],
-                                             name='cat_name')
-            col_imcatidx = table.MaskedColumn(catlen * [catno],
-                                              name='_imcat_idx')
-            col_id = table.MaskedColumn(image.catalog['id'])
-            col_x = table.MaskedColumn(image.catalog['x'], dtype=np.double)
-            col_y = table.MaskedColumn(image.catalog['y'], dtype=np.double)
-            ra, dec = image.det_to_world(
-                image.catalog['x'], image.catalog['y']
-            )
-            col_ra = table.MaskedColumn(ra, dtype=np.double, name='RA')
-            col_dec = table.MaskedColumn(dec, dtype=np.double, name='DEC')
+            col_catname = table.MaskedColumn(catlen * [catname], name="cat_name")
+            col_imcatidx = table.MaskedColumn(catlen * [catno], name="_imcat_idx")
+            col_id = table.MaskedColumn(image.catalog["id"])
+            col_x = table.MaskedColumn(image.catalog["x"], dtype=np.double)
+            col_y = table.MaskedColumn(image.catalog["y"], dtype=np.double)
+            ra, dec = image.det_to_world(image.catalog["x"], image.catalog["y"])
+            col_ra = table.MaskedColumn(ra, dtype=np.double, name="RA")
+            col_dec = table.MaskedColumn(dec, dtype=np.double, name="DEC")
 
             if has_weights:
-                col_wght = table.MaskedColumn(image.catalog['weight'],
-                                              dtype=np.double)
+                col_wght = table.MaskedColumn(image.catalog["weight"], dtype=np.double)
 
                 cat = table.Table(
-                    [col_imcatidx, col_catname, col_id, col_x,
-                     col_y, col_ra, col_dec, col_wght],
-                    masked=True
+                    [col_imcatidx, col_catname, col_id, col_x, col_y, col_ra, col_dec, col_wght],
+                    masked=True,
                 )
 
             else:
                 cat = table.Table(
-                    [col_imcatidx, col_catname, col_id, col_x,
-                     col_y, col_ra, col_dec],
-                    masked=True
+                    [col_imcatidx, col_catname, col_id, col_x, col_y, col_ra, col_dec], masked=True
                 )
 
             catalogs.append(cat)
@@ -826,7 +796,7 @@ class WCSGroupCatalog:
         catname = os.path.commonprefix(cat_names) if cat_names else None
 
         if catno:
-            cat = table.vstack(catalogs, join_type='exact')
+            cat = table.vstack(catalogs, join_type="exact")
 
         else:
             # no catalogs with sources. Create an empty table with required
@@ -837,24 +807,21 @@ class WCSGroupCatalog:
             else:
                 catname = image.name
 
-            col_catname = table.MaskedColumn([catname], name='cat_name')
+            col_catname = table.MaskedColumn([catname], name="cat_name")
             col_catname = col_catname[[False]]
-            col_imcatidx = table.MaskedColumn([], dtype=int,
-                                              name='_imcat_idx')
-            col_id = table.MaskedColumn(image.catalog['id'])
-            col_x = table.MaskedColumn([], name='x', dtype=np.double)
-            col_y = table.MaskedColumn([], name='y', dtype=np.double)
-            col_ra = table.MaskedColumn([], name='RA', dtype=np.double)
-            col_dec = table.MaskedColumn([], name='DEC', dtype=np.double)
+            col_imcatidx = table.MaskedColumn([], dtype=int, name="_imcat_idx")
+            col_id = table.MaskedColumn(image.catalog["id"])
+            col_x = table.MaskedColumn([], name="x", dtype=np.double)
+            col_y = table.MaskedColumn([], name="y", dtype=np.double)
+            col_ra = table.MaskedColumn([], name="RA", dtype=np.double)
+            col_dec = table.MaskedColumn([], name="DEC", dtype=np.double)
 
             cat = table.Table(
-                [col_imcatidx, col_catname, col_id, col_x,
-                 col_y, col_ra, col_dec],
-                masked=True
+                [col_imcatidx, col_catname, col_id, col_x, col_y, col_ra, col_dec], masked=True
             )
 
         if catname:
-            cat.meta['name'] = catname
+            cat.meta["name"] = catname
 
         return cat
 
@@ -864,7 +831,7 @@ class WCSGroupCatalog:
         matched to the sources in the reference catalog.
 
         """
-        mask = self._catalog['matched_ref_id'].mask
+        mask = self._catalog["matched_ref_id"].mask
         return self._catalog[mask]
 
     def get_matched_cat(self):
@@ -873,23 +840,19 @@ class WCSGroupCatalog:
         matched to the sources in the reference catalog.
 
         """
-        mask = np.logical_not(self._catalog['matched_ref_id'].mask)
+        mask = np.logical_not(self._catalog["matched_ref_id"].mask)
         return self._catalog[mask]
 
     def recalc_catalog_radec(self):
-        """Recalculate RA and DEC of the sources in the catalog.
-        """
+        """Recalculate RA and DEC of the sources in the catalog."""
         for k, image in enumerate(self._images):
-
-            idx = (self._catalog['_imcat_idx'] == k)
+            idx = self._catalog["_imcat_idx"] == k
             if not np.any(idx):
                 continue
 
-            ra, dec = image.det_to_world(
-                self._catalog['x'][idx], self._catalog['y'][idx]
-            )
-            self._catalog['RA'][idx] = ra
-            self._catalog['DEC'][idx] = dec
+            ra, dec = image.det_to_world(self._catalog["x"][idx], self._catalog["y"][idx])
+            self._catalog["RA"][idx] = ra
+            self._catalog["DEC"][idx] = dec
 
     def calc_tanp_xy(self, tanplane_wcs):
         """
@@ -905,20 +868,15 @@ class WCSGroupCatalog:
             "projected".
 
         """
-        if 'RA' not in self._catalog.colnames or \
-           'DEC' not in self._catalog.colnames:
-            raise RuntimeError("'recalc_catalog_radec()' should have been run "
-                               "prior to calc_tanp_xy()")
+        if "RA" not in self._catalog.colnames or "DEC" not in self._catalog.colnames:
+            raise RuntimeError(
+                "'recalc_catalog_radec()' should have been run prior to calc_tanp_xy()"
+            )
 
         # compute x & y in the reference WCS:
-        xtp, ytp = tanplane_wcs.world_to_tanp(self.catalog['RA'],
-                                              self.catalog['DEC'])
-        self._catalog['TPx'] = table.MaskedColumn(
-            xtp, name='TPx', dtype=np.double, mask=False
-        )
-        self._catalog['TPy'] = table.MaskedColumn(
-            ytp, name='TPy', dtype=np.double, mask=False
-        )
+        xtp, ytp = tanplane_wcs.world_to_tanp(self.catalog["RA"], self.catalog["DEC"])
+        self._catalog["TPx"] = table.MaskedColumn(xtp, name="TPx", dtype=np.double, mask=False)
+        self._catalog["TPy"] = table.MaskedColumn(ytp, name="TPy", dtype=np.double, mask=False)
 
     def match2ref(self, refcat, match=None):
         """Uses ``xyxymatch`` to cross-match sources between this catalog and
@@ -955,24 +913,25 @@ class WCSGroupCatalog:
 
         if match is None:
             if catlen != len(refcat.catalog):
-                raise ValueError("When matching is not requested, catalogs "
-                                 "should have been matched previously and "
-                                 "have equal lengths.")
+                raise ValueError(
+                    "When matching is not requested, catalogs "
+                    "should have been matched previously and "
+                    "have equal lengths."
+                )
             log.info(
                 "No matching of sources from '%s' catalog with sources from the "
                 "reference '%s' catalog was requested.",
-                self.name, refcat.name
+                self.name,
+                refcat.name,
             )
-            log.info("Catalogs are assumed matched with 1-to-1 "
-                     "correspondence.")
+            log.info("Catalogs are assumed matched with 1-to-1 correspondence.")
             mref_idx = np.arange(catlen)
             minput_idx = np.arange(catlen)
             nmatches = catlen
 
         else:
-            if 'TPx' not in colnames or 'TPy' not in colnames:
-                raise RuntimeError("'calc_tanp_xy()' should have been run "
-                                   "prior to match2ref()")
+            if "TPx" not in colnames or "TPy" not in colnames:
+                raise RuntimeError("'calc_tanp_xy()' should have been run prior to match2ref()")
 
             if catlen == 0:
                 return 0, np.array([], dtype=int), np.array([], dtype=int)
@@ -985,34 +944,29 @@ class WCSGroupCatalog:
                 tp_units = self._images[0].corrector.units
 
             mref_idx, minput_idx = match(
-                refcat.catalog,
-                self._catalog,
-                tp_pscale=tp_pscale,
-                tp_units=tp_units
+                refcat.catalog, self._catalog, tp_pscale=tp_pscale, tp_units=tp_units
             )
             nmatches = len(mref_idx)
 
         # matched_ref_id:
-        if 'matched_ref_id' in colnames:
-            self._catalog['matched_ref_id'].mask[:] = True
+        if "matched_ref_id" in colnames:
+            self._catalog["matched_ref_id"].mask[:] = True
         else:
-            c = table.MaskedColumn(name='matched_ref_id', dtype=int,
-                                   length=catlen, mask=True)
+            c = table.MaskedColumn(name="matched_ref_id", dtype=int, length=catlen, mask=True)
             self._catalog.add_column(c)
 
-        self._catalog['matched_ref_id'].mask[minput_idx] = False
-        self._catalog['matched_ref_id'][minput_idx] = refcat.catalog['id'][mref_idx]
+        self._catalog["matched_ref_id"].mask[minput_idx] = False
+        self._catalog["matched_ref_id"][minput_idx] = refcat.catalog["id"][mref_idx]
 
         # this is needed to index reference catalog directly without using
         # astropy table indexing which, at this moment, is experimental:
-        if '_raw_matched_ref_idx' in colnames:
-            self._catalog['_raw_matched_ref_idx'].mask = True
+        if "_raw_matched_ref_idx" in colnames:
+            self._catalog["_raw_matched_ref_idx"].mask = True
         else:
-            c = table.MaskedColumn(name='_raw_matched_ref_idx',
-                                   dtype=int, length=catlen, mask=True)
+            c = table.MaskedColumn(name="_raw_matched_ref_idx", dtype=int, length=catlen, mask=True)
             self._catalog.add_column(c)
-        self._catalog['_raw_matched_ref_idx'][minput_idx] = mref_idx
-        self._catalog['_raw_matched_ref_idx'].mask[minput_idx] = False
+        self._catalog["_raw_matched_ref_idx"][minput_idx] = mref_idx
+        self._catalog["_raw_matched_ref_idx"].mask[minput_idx] = False
 
         log.info("Found %d matches for '%s'...", nmatches, self.name)
 
@@ -1032,8 +986,15 @@ class WCSGroupCatalog:
 
         return nmatches, mref_idx, minput_idx
 
-    def fit2ref(self, refcat, tanplane_wcs, fitgeom='general', nclip=3,
-                sigma=(3.0, 'rmse'), clip_accum=False):
+    def fit2ref(
+        self,
+        refcat,
+        tanplane_wcs,
+        fitgeom="general",
+        nclip=3,
+        sigma=(3.0, "rmse"),
+        clip_accum=False,
+    ):
         """
         Perform linear fit of this group's combined catalog to the reference
         catalog. When either/both group's catalog or/and the reference catalog
@@ -1119,10 +1080,8 @@ class WCSGroupCatalog:
             ``[0.25,0.25,0.25,0.25,0.5,0.5]``.
 
         """
-        im_xyref = np.asarray([self._catalog['TPx'],
-                               self._catalog['TPy']]).T
-        refxy = np.asarray([refcat.catalog['TPx'],
-                            refcat.catalog['TPy']]).T
+        im_xyref = np.asarray([self._catalog["TPx"], self._catalog["TPy"]]).T
+        refxy = np.asarray([refcat.catalog["TPx"], refcat.catalog["TPy"]]).T
 
         # mask = np.logical_not(self._catalog['matched_ref_id'].mask)
         # im_xyref = im_xyref[mask]
@@ -1142,67 +1101,93 @@ class WCSGroupCatalog:
         refxy = refxy[ref_idx]
 
         # process weights:
-        if 'weight' in self._catalog.colnames:
-            im_weight = np.asarray(self._catalog['weight'])[minput_idx]
+        if "weight" in self._catalog.colnames:
+            im_weight = np.asarray(self._catalog["weight"])[minput_idx]
         else:
             im_weight = None
 
-        if 'weight' in refcat.catalog.colnames:
-            ref_weight = np.asarray(refcat.catalog['weight'])[ref_idx]
+        if "weight" in refcat.catalog.colnames:
+            ref_weight = np.asarray(refcat.catalog["weight"])[ref_idx]
         else:
             ref_weight = None
 
         fit = iter_linear_fit(
-            refxy, im_xyref, ref_weight, im_weight,
-            fitgeom=fitgeom, nclip=nclip, sigma=sigma, center=None,
-            clip_accum=clip_accum
+            refxy,
+            im_xyref,
+            ref_weight,
+            im_weight,
+            fitgeom=fitgeom,
+            nclip=nclip,
+            sigma=sigma,
+            center=None,
+            clip_accum=clip_accum,
         )
 
         # re-compute shifts for the center at (0, 0):
-        fit['shift_ld'] += fit['center_ld'] - np.dot(fit['center_ld'],
-                                                     fit['matrix_ld'].T)
-        fit['shift'] = fit['shift_ld'].astype(np.double)
+        fit["shift_ld"] += fit["center_ld"] - np.dot(fit["center_ld"], fit["matrix_ld"].T)
+        fit["shift"] = fit["shift_ld"].astype(np.double)
 
-        xy_fit = fit['shift'] + np.dot(im_xyref[fit['fitmask']],
-                                       fit['matrix'].T)
+        xy_fit = fit["shift"] + np.dot(im_xyref[fit["fitmask"]], fit["matrix"].T)
 
-        fit['fit_xy'] = xy_fit
-        fit['fit_RA'], fit['fit_DEC'] = tanplane_wcs.tanp_to_world(*(xy_fit.T))
+        fit["fit_xy"] = xy_fit
+        fit["fit_RA"], fit["fit_DEC"] = tanplane_wcs.tanp_to_world(*(xy_fit.T))
 
         log.info("Computed '%s' fit for '%s':", fitgeom, self.name)
-        if fitgeom == 'shift':
-            log.info("XSH: %.6g  YSH: %.6g", fit['shift'][0], fit['shift'][1])
-        elif fitgeom in ['rshift', 'rscale'] and fit['proper']:
+        if fitgeom == "shift":
+            log.info("XSH: %.6g  YSH: %.6g", fit["shift"][0], fit["shift"][1])
+        elif fitgeom in ["rshift", "rscale"] and fit["proper"]:
             log.info(
                 "XSH: %.6g  YSH: %.6g    ROT: %.6g    SCALE: %.6g",
-                fit['shift'][0], fit['shift'][1], fit['proper_rot'], fit['<scale>']
+                fit["shift"][0],
+                fit["shift"][1],
+                fit["proper_rot"],
+                fit["<scale>"],
             )
-        elif fitgeom == 'general' or (fitgeom in ['rshift', 'rscale'] and not
-                                      fit['proper']):
-            log.info("XSH: %.6g  YSH: %.6g    PROPER ROT: %.6g",
-                     fit['shift'][0], fit['shift'][1], fit['proper_rot'])
-            log.info("<ROT>: %.6g  SKEW: %.6g    ROT_X: %.6g  ROT_Y: %.6g",
-                     fit['<rot>'], fit['skew'], fit['rot'][0], fit['rot'][1])
-            log.info("<SCALE>: %.6g  SCALE_X: %.6g  SCALE_Y: %.6g",
-                     fit['<scale>'], fit['scale'][0], fit['scale'][1])
+        elif fitgeom == "general" or (fitgeom in ["rshift", "rscale"] and not fit["proper"]):
+            log.info(
+                "XSH: %.6g  YSH: %.6g    PROPER ROT: %.6g",
+                fit["shift"][0],
+                fit["shift"][1],
+                fit["proper_rot"],
+            )
+            log.info(
+                "<ROT>: %.6g  SKEW: %.6g    ROT_X: %.6g  ROT_Y: %.6g",
+                fit["<rot>"],
+                fit["skew"],
+                fit["rot"][0],
+                fit["rot"][1],
+            )
+            log.info(
+                "<SCALE>: %.6g  SCALE_X: %.6g  SCALE_Y: %.6g",
+                fit["<scale>"],
+                fit["scale"][0],
+                fit["scale"][1],
+            )
         else:
             raise ValueError("Unsupported fit geometry.")  # pragma: no cover
 
         log.info("")
-        log.info("FIT RMSE: %.6g   FIT MAE: %.6g", fit['rmse'], fit['mae'])
-        log.info("Final solution based on %d objects.", fit['resids'].shape[0])
+        log.info("FIT RMSE: %.6g   FIT MAE: %.6g", fit["rmse"], fit["mae"])
+        log.info("Final solution based on %d objects.", fit["resids"].shape[0])
 
         return fit
 
     def apply_affine_to_wcs(self, ref_tpwcs, matrix, shift, meta=None):
         """Applies a general affine transformation to the WCS."""
         for imcat in self:
-            imcat.corrector.set_correction(matrix, shift, ref_tpwcs=ref_tpwcs,
-                                           meta=meta)
+            imcat.corrector.set_correction(matrix, shift, ref_tpwcs=ref_tpwcs, meta=meta)
 
-    def align_to_ref(self, refcat, ref_tpwcs=None, match=None, minobj=None,
-                     fitgeom='rscale', nclip=3, sigma=(3.0, 'rmse'),
-                     clip_accum=False):
+    def align_to_ref(
+        self,
+        refcat,
+        ref_tpwcs=None,
+        match=None,
+        minobj=None,
+        fitgeom="rscale",
+        nclip=3,
+        sigma=(3.0, "rmse"),
+        clip_accum=False,
+    ):
         """
         Matches sources from the image catalog to the sources in the
         reference catalog, finds the affine transformation between matched
@@ -1345,10 +1330,8 @@ class WCSGroupCatalog:
 
         """
         if not self._images:
-            name = 'Unnamed' if self.name is None else self.name
-            log.warning(
-                "WCSGroupCatalog '%s' is empty. Nothing to align.", name
-            )
+            name = "Unnamed" if self.name is None else self.name
+            log.warning("WCSGroupCatalog '%s' is empty. Nothing to align.", name)
             return False
 
         # set initial status to 'FAILED':
@@ -1365,58 +1348,59 @@ class WCSGroupCatalog:
         self.calc_tanp_xy(tanplane_wcs=ref_tpwcs)
         refcat.calc_tanp_xy(tanplane_wcs=ref_tpwcs)
 
-        nmatches, mref_idx, minput_idx = self.match2ref(
-            refcat=refcat,
-            match=match
-        )
+        nmatches, mref_idx, minput_idx = self.match2ref(refcat=refcat, match=match)
 
         if nmatches < minobj:
-            name = 'Unnamed' if self.name is None else self.name
+            name = "Unnamed" if self.name is None else self.name
             log.warning(
-                "Not enough matches (%d) found for image "
-                "catalog '%s'. Min required: %d.",
-                nmatches, name, minobj
+                "Not enough matches (%d) found for image catalog '%s'. Min required: %d.",
+                nmatches,
+                name,
+                minobj,
             )
             for imcat in self:
-                imcat.fit_status = 'FAILED: not enough matches'
+                imcat.fit_status = "FAILED: not enough matches"
             return False
 
-        fit = self.fit2ref(refcat=refcat, tanplane_wcs=ref_tpwcs,
-                           fitgeom=fitgeom, nclip=nclip, sigma=sigma,
-                           clip_accum=clip_accum)
+        fit = self.fit2ref(
+            refcat=refcat,
+            tanplane_wcs=ref_tpwcs,
+            fitgeom=fitgeom,
+            nclip=nclip,
+            sigma=sigma,
+            clip_accum=clip_accum,
+        )
 
         fit_info = {
-            'fitgeom': fitgeom,
-            'eff_minobj': minobj,
-            'matrix': fit['matrix'],
-            'shift': fit['shift'],
-            'center': fit['center'],  # center of rotation in geom. transforms
-            'fitmask': fit['fitmask'],  # sources was used for fitting
-            'proper_rot': fit['proper_rot'],  # proper rotation
-            'proper': fit['proper'],  # is a proper rotation? True/False
-            'rot': fit['rot'],  # rotx, roty
-            '<rot>': fit['<rot>'],  # Arithmetic mean of rotx and roty
-            'scale': fit['scale'],  # sx, sy
-            '<scale>': fit['<scale>'],  # Geometric mean of sx, sy
-            'skew': fit['skew'],  # skew
-            'rmse': fit['rmse'],  # fit RMSE in tangent plane coords
-            'mae': fit['mae'],  # fit MAE in tangent plane coords
-            'fit_RA': fit['fit_RA'],
-            'fit_DEC': fit['fit_DEC'],
-            'status': 'SUCCESS',
+            "fitgeom": fitgeom,
+            "eff_minobj": minobj,
+            "matrix": fit["matrix"],
+            "shift": fit["shift"],
+            "center": fit["center"],  # center of rotation in geom. transforms
+            "fitmask": fit["fitmask"],  # sources was used for fitting
+            "proper_rot": fit["proper_rot"],  # proper rotation
+            "proper": fit["proper"],  # is a proper rotation? True/False
+            "rot": fit["rot"],  # rotx, roty
+            "<rot>": fit["<rot>"],  # Arithmetic mean of rotx and roty
+            "scale": fit["scale"],  # sx, sy
+            "<scale>": fit["<scale>"],  # Geometric mean of sx, sy
+            "skew": fit["skew"],  # skew
+            "rmse": fit["rmse"],  # fit RMSE in tangent plane coords
+            "mae": fit["mae"],  # fit MAE in tangent plane coords
+            "fit_RA": fit["fit_RA"],
+            "fit_DEC": fit["fit_DEC"],
+            "status": "SUCCESS",
         }
 
         if match is not None:
-            fit_info.update({
-                'nmatches': nmatches,
-                'matched_ref_idx': mref_idx,
-                'matched_input_idx': minput_idx
-            })
+            fit_info.update(
+                {"nmatches": nmatches, "matched_ref_idx": mref_idx, "matched_input_idx": minput_idx}
+            )
 
         self.apply_affine_to_wcs(
             ref_tpwcs=ref_tpwcs,
-            matrix=fit['matrix'],
-            shift=fit['shift'],
+            matrix=fit["matrix"],
+            shift=fit["shift"],
             # meta=meta
         )
 
@@ -1468,14 +1452,12 @@ class RefCatalog:
         if catalog is None:
             raise ValueError("Reference catalogs cannot be None")
 
-        if 'RA' not in catalog.colnames or 'DEC' not in catalog.colnames:
-            raise KeyError("Reference catalogs *must* contain *both* 'RA' "
-                           "and 'DEC' columns.")
+        if "RA" not in catalog.colnames or "DEC" not in catalog.colnames:
+            raise KeyError("Reference catalogs *must* contain *both* 'RA' and 'DEC' columns.")
 
     @property
     def name(self):
-        """Get/set :py:class:`RefCatalog` object's name.
-        """
+        """Get/set :py:class:`RefCatalog` object's name."""
         return self._name
 
     @name.setter
@@ -1484,8 +1466,7 @@ class RefCatalog:
 
     @property
     def catalog(self):
-        """Get/set image's catalog.
-        """
+        """Get/set image's catalog."""
         return self._catalog
 
     @catalog.setter
@@ -1493,27 +1474,24 @@ class RefCatalog:
         self._check_catalog(catalog)
 
         if not catalog:
-            raise ValueError("Reference catalog must contain at least one "
-                             "source.")
+            raise ValueError("Reference catalog must contain at least one source.")
 
         self._catalog = catalog.copy()
 
-        if 'id' not in self._catalog.colnames:
-            self._catalog['id'] = np.arange(1, len(self._catalog) + 1)
+        if "id" not in self._catalog.colnames:
+            self._catalog["id"] = np.arange(1, len(self._catalog) + 1)
 
         # create spherical polygon bounding the sources
         self.calc_bounding_polygon()
 
     @property
     def poly_area(self):
-        """Area of the bounding polygon (in srad).
-        """
+        """Area of the bounding polygon (in srad)."""
         return self._poly_area
 
     @property
     def polygon(self):
-        """Get image's (or catalog's) bounding spherical polygon.
-        """
+        """Get image's (or catalog's) bounding spherical polygon."""
         return self._polygon
 
     def intersection(self, wcsim):
@@ -1550,12 +1528,11 @@ class RefCatalog:
     #       is fixed.
     #
     # def intersection_area(self, wcsim):
-        # """ Calculate the area of the intersection polygon.
-        # """
-        # return np.fabs(self.intersection(wcsim).area())
+    # """ Calculate the area of the intersection polygon.
+    # """
+    # return np.fabs(self.intersection(wcsim).area())
     def intersection_area(self, wcsim):
-        """Calculate the area of the intersection polygon.
-        """
+        """Calculate the area of the intersection polygon."""
         if isinstance(wcsim, (WCSImageCatalog, RefCatalog)):
             return np.fabs(self.intersection(wcsim).area())
 
@@ -1563,9 +1540,7 @@ class RefCatalog:
             # this is bug workaround:
             area = 0.0
             for wim in wcsim:
-                area += np.fabs(
-                    self.polygon.intersection(wim.polygon).area()
-                )
+                area += np.fabs(self.polygon.intersection(wim.polygon).area())
             return area
 
     def _guarded_intersection_area(self, wcsim):
@@ -1593,9 +1568,7 @@ class RefCatalog:
             nfailures = 0
             for wim in wcsim:
                 try:
-                    area += np.fabs(
-                        self.polygon.intersection(wim.polygon).area()
-                    )
+                    area += np.fabs(self.polygon.intersection(wim.polygon).area())
                 except MalformedPolygonError:
                     nfailures += 1
                     continue
@@ -1616,15 +1589,15 @@ class RefCatalog:
         # Compute x, y coordinates in this tangent plane based on the
         # previously computed WCS and return the set of x, y coordinates and
         # "reference WCS".
-        x, y, z = _S2C(self.catalog['RA'], self.catalog['DEC'])
+        x, y, z = _S2C(self.catalog["RA"], self.catalog["DEC"])
         ra_ref, dec_ref = _C2S(
-            x.mean(dtype=np.double),
-            y.mean(dtype=np.double),
-            z.mean(dtype=np.double)
+            x.mean(dtype=np.double), y.mean(dtype=np.double), z.mean(dtype=np.double)
         )
 
-        rotm = [planar_rot_3d(np.deg2rad(alpha), 2 - axis)
-                for axis, alpha in enumerate([ra_ref, dec_ref])]
+        rotm = [
+            planar_rot_3d(np.deg2rad(alpha), 2 - axis)
+            for axis, alpha in enumerate([ra_ref, dec_ref])
+        ]
         euler_rot = np.linalg.multi_dot(rotm)
         inv_euler_rot = inv(euler_rot)
         xr, yr, zr = np.dot(euler_rot, (x, y, z))
@@ -1643,10 +1616,8 @@ class RefCatalog:
             # one point. build a small box around it:
             tol = 0.5 * self._footprint_tol
 
-            xv = [xv[0] - tol, xv[0] - tol, xv[0] + tol, xv[0] + tol,
-                  xv[0] - tol]
-            yv = [yv[0] - tol, yv[0] + tol, yv[0] + tol, yv[0] - tol,
-                  yv[0] - tol]
+            xv = [xv[0] - tol, xv[0] - tol, xv[0] + tol, xv[0] + tol, xv[0] - tol]
+            yv = [yv[0] - tol, yv[0] + tol, yv[0] + tol, yv[0] - tol, yv[0] - tol]
 
         elif len(xv) == 2 or len(xv) == 3:
             # two points. build a small box around them:
@@ -1663,14 +1634,14 @@ class RefCatalog:
                 xv[0] - (vx + vy) * tol,
                 xv[1] + (vx - vy) * tol,
                 xv[1] + (vx + vy) * tol,
-                xv[0] - (vx - vy) * tol
+                xv[0] - (vx - vy) * tol,
             ]
             yv = [
                 yv[0] - (vy + vx) * tol,
                 yv[0] - (vy - vx) * tol,
                 yv[1] + (vy + vx) * tol,
                 yv[1] + (vy - vx) * tol,
-                yv[0] - (vy + vx) * tol
+                yv[0] - (vy + vx) * tol,
             ]
 
         # "unrotate" cartezian coordinates back to their original
@@ -1692,8 +1663,7 @@ class RefCatalog:
         self._poly_area = np.fabs(self._polygon.area())
 
     def calc_bounding_polygon(self):
-        """Calculate bounding polygon of the sources in the catalog.
-        """
+        """Calculate bounding polygon of the sources in the catalog."""
         # create spherical polygon bounding the sources
         self._calc_cat_convex_hull()
 
@@ -1724,21 +1694,18 @@ class RefCatalog:
         cat = catalog.copy()
         if self._catalog is None:
             self._catalog = cat
-            if 'id' not in self._catalog.colnames:  # pragma: no branch
-                self._catalog['id'] = np.arange(1, len(self._catalog) + 1)
+            if "id" not in self._catalog.colnames:  # pragma: no branch
+                self._catalog["id"] = np.arange(1, len(self._catalog) + 1)
         else:
-            maxid = self.catalog['id'].max()
+            maxid = self.catalog["id"].max()
             oldlen = len(self.catalog)
             self._catalog = table.vstack(
-                [self.catalog, cat],
-                join_type='outer',
-                metadata_conflicts='silent'
+                [self.catalog, cat], join_type="outer", metadata_conflicts="silent"
             )
 
             # assign ids to the newly added source positions in consecutive
             # order above the largest id in the already existing catalog:
-            self._catalog['id'][oldlen:] = np.arange(maxid + 1,
-                                                     maxid + len(cat) + 1)
+            self._catalog["id"][oldlen:] = np.arange(maxid + 1, maxid + len(cat) + 1)
 
         self.calc_bounding_polygon()
 
@@ -1758,14 +1725,9 @@ class RefCatalog:
 
         """
         # compute x & y in the reference WCS:
-        xtp, ytp = tanplane_wcs.world_to_tanp(self.catalog['RA'],
-                                              self.catalog['DEC'])
-        self._catalog['TPx'] = table.MaskedColumn(
-            xtp, name='TPx', dtype=np.double, mask=False
-        )
-        self._catalog['TPy'] = table.MaskedColumn(
-            ytp, name='TPy', dtype=np.double, mask=False
-        )
+        xtp, ytp = tanplane_wcs.world_to_tanp(self.catalog["RA"], self.catalog["DEC"])
+        self._catalog["TPx"] = table.MaskedColumn(xtp, name="TPx", dtype=np.double, mask=False)
+        self._catalog["TPy"] = table.MaskedColumn(ytp, name="TPy", dtype=np.double, mask=False)
 
 
 def convex_hull(x, y, wcs=None, min_separation=None):
@@ -1830,10 +1792,7 @@ Convex_hull/Monotone_chain>`_
 
     elif len(points) == 1:
         if ndarray:
-            return _format_return(
-                np.array([points[0][0]]),
-                np.array([points[0][1]])
-            )
+            return _format_return(np.array([points[0][0]]), np.array([points[0][1]]))
 
     # 2D cross product of OA and OB vectors, i.e. z-component of their
     # 3D cross product.
@@ -1868,8 +1827,10 @@ Convex_hull/Monotone_chain>`_
         # remove points that are too close to each other:
         idx = list(range(np.size(ptx)))
         for k in range(np.size(ptx) - 2, 0, -1):
-            if np.abs(ptx[k] - ptx[k + 1]) <= min_separation and \
-               np.abs(pty[k] - pty[k + 1]) <= min_separation:
+            if (
+                np.abs(ptx[k] - ptx[k + 1]) <= min_separation
+                and np.abs(pty[k] - pty[k + 1]) <= min_separation
+            ):
                 idx.pop(k)
 
         ptx = ptx[idx]

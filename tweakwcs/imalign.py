@@ -9,6 +9,7 @@ image catalogs "align" to the reference catalog *on the sky*.
 :License: :doc:`LICENSE`
 
 """
+
 import collections
 import logging
 from datetime import datetime
@@ -24,9 +25,9 @@ from .linearfit import _SUPPORTED_FITGEOM_EN_STR, SUPPORTED_FITGEOM_MODES
 from .matchutils import XYXYMatch
 from .wcsimage import RefCatalog, WCSGroupCatalog, WCSImageCatalog
 
-__author__ = 'Mihai Cara'
+__author__ = "Mihai Cara"
 
-__all__ = ['NotEnoughCatalogs', 'align_wcs', 'fit_wcs']
+__all__ = ["NotEnoughCatalogs", "align_wcs", "fit_wcs"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -39,11 +40,19 @@ class NotEnoughCatalogs(ValueError):
     """
 
 
-@deprecated_renamed_argument('tpwcs', 'corrector', since='0.8.0')
-def fit_wcs(refcat, imcat, corrector, ref_tpwcs=None, fitgeom='general',
-            nclip=3, sigma=(3.0, 'rmse'), clip_accum=False,
-            group_bb_policy='auto'):
-    """"Tweak" **a single** image's ``WCS`` by fitting image catalog to a
+@deprecated_renamed_argument("tpwcs", "corrector", since="0.8.0")
+def fit_wcs(
+    refcat,
+    imcat,
+    corrector,
+    ref_tpwcs=None,
+    fitgeom="general",
+    nclip=3,
+    sigma=(3.0, "rmse"),
+    clip_accum=False,
+    group_bb_policy="auto",
+):
+    """ "Tweak" **a single** image's ``WCS`` by fitting image catalog to a
     reference catalog. This is a simplified version of `align_wcs` that does
     not perform matching and is limited to the fitting part.
 
@@ -252,26 +261,20 @@ def fit_wcs(refcat, imcat, corrector, ref_tpwcs=None, fitgeom='general',
 
     try:
         # Attempt to set initial status to FAILED.
-        corrector.meta['fit_info'] = {'status': 'FAILED: Unknown error'}
+        corrector.meta["fit_info"] = {"status": "FAILED: Unknown error"}
     except Exception:
         raise AttributeError("Unable to set/modify corrector.meta attribute.")
 
     # check fitgeom:
     fitgeom = fitgeom.lower()
     if fitgeom not in SUPPORTED_FITGEOM_MODES:
-        raise ValueError(
-            "Unsupported 'fitgeom'. Valid values are: "
-            f"{_SUPPORTED_FITGEOM_EN_STR:s}"
-        )
+        raise ValueError(f"Unsupported 'fitgeom'. Valid values are: {_SUPPORTED_FITGEOM_EN_STR:s}")
 
-    wimcat = WCSImageCatalog(imcat, corrector,
-                             name=imcat.meta.get('name', 'Unnamed'))
+    wimcat = WCSImageCatalog(imcat, corrector, name=imcat.meta.get("name", "Unnamed"))
     wgcat = WCSGroupCatalog(
-        wimcat,
-        name=imcat.meta.get('name', 'Unnamed'),
-        bb_policy=group_bb_policy
+        wimcat, name=imcat.meta.get("name", "Unnamed"), bb_policy=group_bb_policy
     )
-    wrefcat = RefCatalog(refcat, name=imcat.meta.get('name', 'Unnamed'))
+    wrefcat = RefCatalog(refcat, name=imcat.meta.get("name", "Unnamed"))
 
     succes = wgcat.align_to_ref(
         refcat=wrefcat,
@@ -281,33 +284,39 @@ def fit_wcs(refcat, imcat, corrector, ref_tpwcs=None, fitgeom='general',
         fitgeom=fitgeom,
         nclip=nclip,
         sigma=sigma,
-        clip_accum=clip_accum
+        clip_accum=clip_accum,
     )
 
-    corrector.meta['fit_info'] = wimcat.fit_info
+    corrector.meta["fit_info"] = wimcat.fit_info
     if not succes:
         log.warning("Failed to align catalog '%s'.", wgcat.name)
 
     # log running time:
     runtime_end = datetime.now()
     log.info(" ")
+    log.info("***** %s.%s() ended on %s", __name__, function_name, runtime_end)
     log.info(
-        "***** %s.%s() ended on %s",
-        __name__, function_name, runtime_end
-    )
-    log.info(
-        "***** %s.%s() TOTAL RUN TIME: %s",
-        __name__, function_name, runtime_end - runtime_begin
+        "***** %s.%s() TOTAL RUN TIME: %s", __name__, function_name, runtime_end - runtime_begin
     )
     log.info(" ")
 
     return wgcat[0].corrector
 
 
-def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
-              expand_refcat=False, minobj=None, match=XYXYMatch(),
-              fitgeom='general', nclip=3, sigma=(3.0, 'rmse'),
-              clip_accum=False, group_bb_policy='auto'):
+def align_wcs(
+    wcscat,
+    refcat=None,
+    ref_tpwcs=None,
+    enforce_user_order=True,
+    expand_refcat=False,
+    minobj=None,
+    match=XYXYMatch(),
+    fitgeom="general",
+    nclip=3,
+    sigma=(3.0, "rmse"),
+    clip_accum=False,
+    group_bb_policy="auto",
+):
     r"""
     Align (groups of) image catalogs by adjusting the parameters of their
     WCS based on fits between matched sources in these catalogs and a reference
@@ -548,9 +557,7 @@ def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
     runtime_begin = datetime.now()
 
     log.info(" ")
-    log.info(
-        "***** %s.%s() started on %s", __name__, function_name, runtime_begin
-    )
+    log.info("***** %s.%s() started on %s", __name__, function_name, runtime_begin)
     log.info("      Version %s", __version__)
     log.info(" ")
 
@@ -561,23 +568,26 @@ def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
     else:
         start = 0
 
-    if not (hasattr(wcscat, '__iter__') and all(isinstance(wcat, WCSCorrector)
-                                                for wcat in wcscat[start:])):
-        raise TypeError("Input 'wcscat' must be either a single "
-                        "WCSCorrector-derived object or a list of "
-                        "WCSCorrector-derived objects.")
+    if not (
+        hasattr(wcscat, "__iter__")
+        and all(isinstance(wcat, WCSCorrector) for wcat in wcscat[start:])
+    ):
+        raise TypeError(
+            "Input 'wcscat' must be either a single "
+            "WCSCorrector-derived object or a list of "
+            "WCSCorrector-derived objects."
+        )
 
     wcs_im_cats = []
     for wcat in wcscat:
-        if wcat.meta.get('catalog', None) is None:
-            raise ValueError("Each object in 'wcscat' must have a valid "
-                             "catalog.")
+        if wcat.meta.get("catalog", None) is None:
+            raise ValueError("Each object in 'wcscat' must have a valid catalog.")
 
         wcs_im_cat = WCSImageCatalog(
-            catalog=wcat.meta['catalog'],
+            catalog=wcat.meta["catalog"],
             corrector=wcat,
-            name=wcat.meta.get('name', 'Unknown'),
-            group_id=wcat.meta.get('group_id', None)
+            name=wcat.meta.get("name", "Unknown"),
+            group_id=wcat.meta.get("group_id", None),
         )
         wcs_im_cat.fit_status = "FAILED: Unknown error"
 
@@ -590,44 +600,37 @@ def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
             minobj = SUPPORTED_FITGEOM_MODES[fitgeom]
             log.debug("Setting 'minobj' to %s for fitgeom='%s'", minobj, fitgeom)
     except KeyError:
-        raise ValueError(
-            "Unsupported 'fitgeom'. Valid values are: "
-            f"{_SUPPORTED_FITGEOM_EN_STR:s}"
-        )
+        raise ValueError(f"Unsupported 'fitgeom'. Valid values are: {_SUPPORTED_FITGEOM_EN_STR:s}")
 
     # process reference catalog or image if provided:
     if refcat is not None:
         if isinstance(refcat, WCSCorrector):
-            if 'catalog' not in refcat.meta:
-                raise ValueError("Reference 'WCSCorrector' must contain a "
-                                 "catalog.")
+            if "catalog" not in refcat.meta:
+                raise ValueError("Reference 'WCSCorrector' must contain a catalog.")
 
-            rcat = refcat.meta['catalog'].copy()
+            rcat = refcat.meta["catalog"].copy()
 
-            if not ('RA' in rcat.colnames and 'DEC' in rcat.colnames):  # pragma: no branch
+            if not ("RA" in rcat.colnames and "DEC" in rcat.colnames):  # pragma: no branch
                 # convert image x & y to world coordinates:
-                ra, dec = refcat.det_to_world(rcat['x'], rcat['y'])
-                rcat['RA'] = ra
-                rcat['DEC'] = dec
+                ra, dec = refcat.det_to_world(rcat["x"], rcat["y"])
+                rcat["RA"] = ra
+                rcat["DEC"] = dec
 
-            refcat_name = refcat.meta.get(
-                'name', rcat.meta.get('name', 'Unnamed')
-            )
+            refcat_name = refcat.meta.get("name", rcat.meta.get("name", "Unnamed"))
 
             refcat = RefCatalog(rcat, name=refcat_name)
 
         elif isinstance(refcat, astropy.table.Table):
-            if 'RA' not in refcat.colnames or 'DEC' not in refcat.colnames:
-                raise KeyError("Reference catalogs *must* contain *both* 'RA' "
-                               "and 'DEC' columns.")
-            refcat = RefCatalog(
-                refcat, name=refcat.meta.get('name', 'Unnamed')
-            )
+            if "RA" not in refcat.colnames or "DEC" not in refcat.colnames:
+                raise KeyError("Reference catalogs *must* contain *both* 'RA' and 'DEC' columns.")
+            refcat = RefCatalog(refcat, name=refcat.meta.get("name", "Unnamed"))
 
         else:
-            raise TypeError("Unsupported 'refcat' type. Supported 'refcat' "
-                            "types are 'tweakwcs.correctors.WCSCorrector' and "
-                            "'astropy.table.Table'")
+            raise TypeError(
+                "Unsupported 'refcat' type. Supported 'refcat' "
+                "types are 'tweakwcs.correctors.WCSCorrector' and "
+                "'astropy.table.Table'"
+            )
 
     # find group ID and assign images to groups:
     grouped_images = collections.defaultdict(list)
@@ -640,27 +643,20 @@ def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
         if group_id is None:
             for wcat in wcatalogs:
                 wcs_gcat.append(
-                    WCSGroupCatalog(
-                        wcat,
-                        name='GROUP ID: None',
-                        bb_policy=group_bb_policy
-                    )
+                    WCSGroupCatalog(wcat, name="GROUP ID: None", bb_policy=group_bb_policy)
                 )
 
         else:
             gcat = WCSGroupCatalog(
-                wcatalogs,
-                name=f"GROUP ID: {group_id}",
-                bb_policy=group_bb_policy
+                wcatalogs, name=f"GROUP ID: {group_id}", bb_policy=group_bb_policy
             )
             if not len(gcat.catalog):
-                log.warning("Group with ID '%s' will not be aligned: empty "
-                            "source catalog", group_id)
+                log.warning(
+                    "Group with ID '%s' will not be aligned: empty source catalog", group_id
+                )
 
                 for wcat in wcatalogs:
-                    wcat.corrector.meta['fit_info'] = {
-                        'status': 'FAILED: empty source catalog'
-                    }
+                    wcat.corrector.meta["fit_info"] = {"status": "FAILED: empty source catalog"}
 
                 continue
 
@@ -669,8 +665,7 @@ def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
     # check that we have enough input images:
     if (refcat is None and len(wcs_gcat) < 2) or len(wcs_gcat) == 0:
         raise NotEnoughCatalogs(
-            "Too few input images (or groups of images) with "
-            "non-empty catalogs."
+            "Too few input images (or groups of images) with non-empty catalogs."
         )
 
     # get the first image to be aligned and
@@ -678,27 +673,25 @@ def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
     if refcat is None:
         # create reference catalog:
         ref_imcat, current_wcat, area = _max_overlap_pair(
-            images=wcs_gcat,
-            enforce_user_order=enforce_user_order or not expand_refcat
+            images=wcs_gcat, enforce_user_order=enforce_user_order or not expand_refcat
         )
         log.info("Selected image '%s' as reference image", ref_imcat.name)
 
         refcat = RefCatalog(ref_imcat.catalog, name=ref_imcat[0].name)
 
         for wcat in ref_imcat:
-            wcat.corrector.meta['fit_info'] = {'status': 'REFERENCE'}
+            wcat.corrector.meta["fit_info"] = {"status": "REFERENCE"}
 
     else:
         # find the first image to be aligned:
         current_wcat, area = _max_overlap_image(
             refimage=refcat,
             images=wcs_gcat,
-            enforce_user_order=enforce_user_order or not expand_refcat
+            enforce_user_order=enforce_user_order or not expand_refcat,
         )
 
     while current_wcat is not None:
-        log.info("Aligning image catalog '%s' to the reference catalog.",
-                 current_wcat.name)
+        log.info("Aligning image catalog '%s' to the reference catalog.", current_wcat.name)
 
         current_wcat.align_to_ref(
             refcat=refcat,
@@ -708,20 +701,21 @@ def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
             fitgeom=fitgeom,
             nclip=nclip,
             sigma=sigma,
-            clip_accum=clip_accum
+            clip_accum=clip_accum,
         )
 
         for wcat in current_wcat:
-            wcat.corrector.meta['fit_info'] = wcat.fit_info
+            wcat.corrector.meta["fit_info"] = wcat.fit_info
 
         # add unmatched sources to the reference catalog:
         if expand_refcat:
-            if wcat.corrector.meta['fit_info']['status'] == 'SUCCESS' or not area:
+            if wcat.corrector.meta["fit_info"]["status"] == "SUCCESS" or not area:
                 unmatched_src = current_wcat.get_unmatched_cat()
                 refcat.expand_catalog(unmatched_src)
                 log.info(
-                    "Added %d unmatched sources from '%s' to the reference "
-                    "catalog.", len(unmatched_src), current_wcat.name
+                    "Added %d unmatched sources from '%s' to the reference catalog.",
+                    len(unmatched_src),
+                    current_wcat.name,
                 )
             else:
                 log.warning(
@@ -729,14 +723,14 @@ def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
                     "reference catalog. Therefore, it will not be added to the "
                     "expanded reference catalog. Reported error: '%s'",
                     current_wcat.name,
-                    wcat.corrector.meta['fit_info']['status']
+                    wcat.corrector.meta["fit_info"]["status"],
                 )
 
         # find the next image to be aligned:
         current_wcat, area = _max_overlap_image(
             refimage=refcat,
             images=wcs_gcat,
-            enforce_user_order=enforce_user_order or not expand_refcat
+            enforce_user_order=enforce_user_order or not expand_refcat,
         )
 
     # log running time:
@@ -744,10 +738,7 @@ def align_wcs(wcscat, refcat=None, ref_tpwcs=None, enforce_user_order=True,
     log.info(" ")
     log.info("***** %s.%s() ended on %s", __name__, function_name, runtime_end)
     log.info(
-        "***** %s.%s() TOTAL RUN TIME: %s",
-        __name__,
-        function_name,
-        runtime_end - runtime_begin
+        "***** %s.%s() TOTAL RUN TIME: %s", __name__, function_name, runtime_end - runtime_begin
     )
     log.info(" ")
 

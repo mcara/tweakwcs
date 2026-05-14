@@ -4,6 +4,7 @@ A module containing unit tests for the `wcsutil` module.
 Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
+
 from itertools import groupby
 
 import pytest
@@ -11,7 +12,7 @@ import pytest
 from tweakwcs.utils.jwst_utils import assign_jwst_tweakwcs_groups
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def data_model_list():
     pytest.importorskip("jwst")
     from jwst.datamodels import ModelContainer
@@ -20,21 +21,21 @@ def data_model_list():
     models = []
     for k in range(6):
         m = ImageModel()
-        m.meta.observation.program_number = '0001'
-        m.meta.observation.observation_number = '1'
-        m.meta.observation.visit_number = '1'
-        m.meta.observation.visit_group = '1'
-        m.meta.observation.sequence_id = '01'
-        m.meta.observation.activity_id = '1'
-        m.meta.observation.exposure_number = '1'
-        m.meta.instrument.name = 'NIRCAM'
-        m.meta.instrument.channel = 'SHORT'
-        m.meta.filename = f'file{k:d}.fits'
+        m.meta.observation.program_number = "0001"
+        m.meta.observation.observation_number = "1"
+        m.meta.observation.visit_number = "1"
+        m.meta.observation.visit_group = "1"
+        m.meta.observation.sequence_id = "01"
+        m.meta.observation.activity_id = "1"
+        m.meta.observation.exposure_number = "1"
+        m.meta.instrument.name = "NIRCAM"
+        m.meta.instrument.channel = "SHORT"
+        m.meta.filename = f"file{k:d}.fits"
         models.append(m)
 
-    models[-3].meta.observation.observation_number = '2'
-    models[-2].meta.observation.observation_number = '3'
-    models[-1].meta.observation.observation_number = '3'
+    models[-3].meta.observation.observation_number = "2"
+    models[-2].meta.observation.observation_number = "3"
+    models[-1].meta.observation.observation_number = "3"
 
     return ModelContainer(models)
 
@@ -44,15 +45,15 @@ def defective_data_model():
     class DummyMeta(dict):
         def __init__(self, *args):
             super().__init__(args)
-            dict.__setitem__(self, 'filename', 'dummy.file')
+            dict.__setitem__(self, "filename", "dummy.file")
 
         @property
         def tweakwcs_group_id(self):
-            return dict.__getitem__(self, 'tweakwcs_group_id')
+            return dict.__getitem__(self, "tweakwcs_group_id")
 
         @tweakwcs_group_id.setter
         def tweakwcs_group_id(self, v):
-            dict.__setitem__(self, 'tweakwcs_group_id', v)
+            dict.__setitem__(self, "tweakwcs_group_id", v)
 
     class BrokenModel:
         def __init__(self):
@@ -71,20 +72,16 @@ def defective_data_model():
 def test_assign_jwst_tweakwcs_groups_fail(defective_data_model):
     pytest.importorskip("jwst")
     assign_jwst_tweakwcs_groups([defective_data_model])
-    assert defective_data_model.meta.tweakwcs_group_id == 'None'
+    assert defective_data_model.meta.tweakwcs_group_id == "None"
 
 
 def test_assign_jwst_tweakwcs_groups(data_model_list, monkeypatch):
-    """ Imitate string file names and file IO: """
+    """Imitate string file names and file IO:"""
     jwst = pytest.importorskip("jwst")
     stdatamodels = pytest.importorskip("stdatamodels")
     models = {m.meta.filename: m for m in data_model_list}
-    monkeypatch.setattr(
-        stdatamodels.jwst.datamodels.ImageModel,
-        'save',
-        lambda s, m: m
-    )
-    monkeypatch.setattr(jwst.datamodels, 'open', lambda fname: models[fname])
+    monkeypatch.setattr(stdatamodels.jwst.datamodels.ImageModel, "save", lambda s, m: m)
+    monkeypatch.setattr(jwst.datamodels, "open", lambda fname: models[fname])
 
     assign_jwst_tweakwcs_groups(list(models.keys()))
 

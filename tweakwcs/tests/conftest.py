@@ -12,10 +12,7 @@ from tweakwcs.linearfit import build_fit_matrix
 from .helper_correctors import make_mock_st_wcs
 
 
-@pytest.fixture(
-    scope='module',
-    params=[ST_V2V3_WCSCorrector, JWSTWCSCorrector, RomanWCSCorrector]
-)
+@pytest.fixture(scope="module", params=[ST_V2V3_WCSCorrector, JWSTWCSCorrector, RomanWCSCorrector])
 def mock_st_wcs(request):
     corr_cls = request.param
     cd = build_fit_matrix((36, 47), 1e-5)
@@ -26,32 +23,32 @@ def mock_st_wcs(request):
         roll=115.0,
         crpix=[512.0, 512.0],
         cd=cd,
-        crval=[82.0, 12.0]
+        crval=[82.0, 12.0],
     )
     return w, corr_cls
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def mock_fits_wcs():
     cd = build_fit_matrix((36, 47), 1e-5)
     w = fitswcs.WCS(naxis=2)
     w.wcs.cd = cd
     w.wcs.crval = [82.0, 12.0]
     w.wcs.crpix = [512.0, 512.0]
-    w.wcs.ctype = ['RA---TAN', 'DEC--TAN']
+    w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
     w.pixel_shape = [1024, 2048]
     w.pixel_bounds = ((-0.5, 1024 - 0.5), (-0.5, 2048 - 0.5))
     w.wcs.set()
     return w
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def empty_imcat():
-    imcat = Table([[], []], names=['x', 'y'])
+    imcat = Table([[], []], names=["x", "y"])
     return imcat
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def empty_refcat():
-    refcat = Table([[], []], names=['RA', 'DEC'])
+    refcat = Table([[], []], names=["RA", "DEC"])
     return refcat

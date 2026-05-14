@@ -4,6 +4,7 @@ A module containing unit tests for the `wcsutil` module.
 Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
+
 import math
 
 import gwcs
@@ -16,15 +17,15 @@ from astropy.modeling import Model, Parameter
 from astropy.modeling.models import AffineTransformation2D, Identity
 from tweakwcs.correctors import WCSCorrector
 
-_S2C = SphericalToCartesian(name='s2c', wrap_lon_at=180)
-_C2S = CartesianToSpherical(name='c2s', wrap_lon_at=180)
+_S2C = SphericalToCartesian(name="s2c", wrap_lon_at=180)
+_C2S = CartesianToSpherical(name="c2s", wrap_lon_at=180)
 
 
 class DummyWCSCorrector(WCSCorrector):
-    def set_correction(self, matrix=[[1, 0], [0, 1]], shift=[0, 0],
-                       ref_tpwcs=None, meta=None, **kwargs):
-        super().set_correction(matrix=matrix, shift=shift,
-                               ref_tpwcs=ref_tpwcs, meta=meta, **kwargs)
+    def set_correction(
+        self, matrix=[[1, 0], [0, 1]], shift=[0, 0], ref_tpwcs=None, meta=None, **kwargs
+    ):
+        super().set_correction(matrix=matrix, shift=shift, ref_tpwcs=ref_tpwcs, meta=meta, **kwargs)
 
     def det_to_world(self, x, y):
         return super().det_to_world(x, y)
@@ -48,23 +49,19 @@ class DummyWCSCorrector(WCSCorrector):
 def rot_mat3d(angle, axis):
     cs = math.cos(angle)
     sn = math.sin(angle)
-    axisv = np.array(axis * [0.0] + [1.0] + (2 - axis) * [0.0],
-                     dtype=np.double)
+    axisv = np.array(axis * [0.0] + [1.0] + (2 - axis) * [0.0], dtype=np.double)
     mat2d = np.array([[cs, sn], [-sn, cs]], dtype=np.double)
     return np.insert(np.insert(mat2d, axis, [0.0, 0.0], 1), axis, axisv, 0)
 
 
-def create_DetToV2V3(corr_cls, v2ref=0.0, v3ref=0.0, roll=0.0,
-                     cd=[[1.0, 0.0], [0.0, 1.0]], crpix=[0, 0]):
+def create_DetToV2V3(
+    corr_cls, v2ref=0.0, v3ref=0.0, roll=0.0, cd=[[1.0, 0.0], [0.0, 1.0]], crpix=[0, 0]
+):
     tpcorr = corr_cls._tpcorr_init(v2_ref=v2ref, v3_ref=v3ref, roll_ref=roll)
 
     afinv = AffineTransformation2D(cd, -np.dot(cd, crpix)).inverse
 
-    corr_cls._tpcorr_combine_affines(
-        tpcorr,
-        afinv.matrix.value,
-        afinv.translation.value
-    )
+    corr_cls._tpcorr_combine_affines(tpcorr, afinv.matrix.value, afinv.translation.value)
 
     p = corr_cls._v2v3_to_tpcorr_from_full(tpcorr)
     partial_tpcorr = p.inverse
@@ -73,22 +70,17 @@ def create_DetToV2V3(corr_cls, v2ref=0.0, v3ref=0.0, roll=0.0,
     return partial_tpcorr
 
 
-def create_V2V3ToDet(corr_cls, v2ref=0.0, v3ref=0.0, roll=0.0,
-                     cd=[[1.0, 0.0], [0.0, 1.0]], crpix=[0, 0]):
+def create_V2V3ToDet(
+    corr_cls, v2ref=0.0, v3ref=0.0, roll=0.0, cd=[[1.0, 0.0], [0.0, 1.0]], crpix=[0, 0]
+):
     inv_partial_tpcorr = create_DetToV2V3(
-        corr_cls,
-        v2ref=v2ref,
-        v3ref=v3ref,
-        roll=roll,
-        crpix=crpix,
-        cd=cd
+        corr_cls, v2ref=v2ref, v3ref=v3ref, roll=roll, crpix=crpix, cd=cd
     ).inverse
     return inv_partial_tpcorr
 
 
 class V2V3ToSky(Model):
-    """Rotates V2-V3 sphere on the sky.
-    """
+    """Rotates V2-V3 sphere on the sky."""
 
     angles = Parameter()
 
@@ -107,8 +99,7 @@ class V2V3ToSky(Model):
     @staticmethod
     def build_euler_matrix(axis_angle):
         # build Euler rotation matrices:
-        rotm = [rot_mat3d(np.deg2rad(alpha), axis)
-                for axis, alpha in axis_angle]
+        rotm = [rot_mat3d(np.deg2rad(alpha), axis) for axis, alpha in axis_angle]
         euler_rot = np.linalg.multi_dot(rotm)
         return euler_rot
 
@@ -125,12 +116,11 @@ class V2V3ToSky(Model):
     def evaluate(self, v2, v3, angles):
         """Evaluate the model on some input variables."""
         # convert spherical coordinates to cartesian assuming unit sphere:
-        xyz = self.spherical2cartesian(v2.ravel() / 3600., v3.ravel() / 3600.0)
+        xyz = self.spherical2cartesian(v2.ravel() / 3600.0, v3.ravel() / 3600.0)
 
         # build Euler rotation matrices:
         euler_rot = self.__class__.build_euler_matrix(
-            [(v[0], -v[1]) if v[0] != 1 else v for v in
-             zip(self.axes_order, angles[0])][::-1]
+            [(v[0], -v[1]) if v[0] != 1 else v for v in zip(self.axes_order, angles[0])][::-1]
         )
 
         # rotate cartezian coordinates:
@@ -168,8 +158,7 @@ class V2V3ToSkyInv(Model):
     @staticmethod
     def build_euler_matrix(axis_angle):
         # build Euler rotation matrices:
-        rotm = [rot_mat3d(np.deg2rad(alpha), axis)
-                for axis, alpha in axis_angle]
+        rotm = [rot_mat3d(np.deg2rad(alpha), axis) for axis, alpha in axis_angle]
         euler_rot = np.linalg.multi_dot(rotm)
         return euler_rot
 
@@ -190,8 +179,10 @@ class V2V3ToSkyInv(Model):
 
         # build Euler rotation matrices:
         euler_rot = self.__class__.build_euler_matrix(
-            [(v[0], -v[1]) if v[0] != 1 else v for v in
-             zip(self.axes_order[::-1], (-angles[0])[::-1])][::-1]
+            [
+                (v[0], -v[1]) if v[0] != 1 else v
+                for v in zip(self.axes_order[::-1], (-angles[0])[::-1])
+            ][::-1]
         )
 
         # rotate cartezian coordinates:
@@ -207,43 +198,49 @@ class V2V3ToSkyInv(Model):
         return V2V3ToSky(self.angles.value, self.axes_order)
 
 
-def make_mock_st_pipeline(corr_cls, v2ref=0, v3ref=0, roll=0,
-                          crpix=[512, 512], cd=[[1e-5, 0], [0, 1e-5]],
-                          crval=[0, 0], enable_vacorr=True):
+def make_mock_st_pipeline(
+    corr_cls,
+    v2ref=0,
+    v3ref=0,
+    roll=0,
+    crpix=[512, 512],
+    cd=[[1e-5, 0], [0, 1e-5]],
+    crval=[0, 0],
+    enable_vacorr=True,
+):
     detector = gwcs.coordinate_frames.Frame2D(
-        name='detector', axes_order=(0, 1), unit=(u.pix, u.pix)
+        name="detector", axes_order=(0, 1), unit=(u.pix, u.pix)
     )
-    v2v3 = gwcs.coordinate_frames.Frame2D(
-        name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec)
-    )
+    v2v3 = gwcs.coordinate_frames.Frame2D(name="v2v3", axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     v2v3vacorr = gwcs.coordinate_frames.Frame2D(
-        name='v2v3vacorr', axes_order=(0, 1), unit=(u.arcsec, u.arcsec)
+        name="v2v3vacorr", axes_order=(0, 1), unit=(u.arcsec, u.arcsec)
     )
-    world = gwcs.coordinate_frames.CelestialFrame(reference_frame=coord.ICRS(),
-                                                  name='world')
+    world = gwcs.coordinate_frames.CelestialFrame(reference_frame=coord.ICRS(), name="world")
     det2v2v3 = create_DetToV2V3(
-        corr_cls,
-        v2ref=v2ref / 3600.0,
-        v3ref=v3ref / 3600.0,
-        roll=roll,
-        cd=cd,
-        crpix=crpix
+        corr_cls, v2ref=v2ref / 3600.0, v3ref=v3ref / 3600.0, roll=roll, cd=cd, crpix=crpix
     )
 
-    v23sky = V2V3ToSky([-v2ref / 3600.0, v3ref / 3600.0, -roll,
-                        -crval[1], crval[0]], [2, 1, 0, 1, 2])
+    v23sky = V2V3ToSky(
+        [-v2ref / 3600.0, v3ref / 3600.0, -roll, -crval[1], crval[0]], [2, 1, 0, 1, 2]
+    )
     if enable_vacorr:
-        pipeline = [(detector, det2v2v3), (v2v3, Identity(2)),
-                    (v2v3vacorr, v23sky), (world, None)]
+        pipeline = [(detector, det2v2v3), (v2v3, Identity(2)), (v2v3vacorr, v23sky), (world, None)]
     else:
         pipeline = [(detector, det2v2v3), (v2v3, v23sky), (world, None)]
 
     return pipeline
 
 
-def make_mock_st_wcs(corr_cls, v2ref=0, v3ref=0, roll=0, crpix=[512, 512],
-                     cd=[[1e-5, 0], [0, 1e-5]], crval=[0, 0],
-                     enable_vacorr=True):
+def make_mock_st_wcs(
+    corr_cls,
+    v2ref=0,
+    v3ref=0,
+    roll=0,
+    crpix=[512, 512],
+    cd=[[1e-5, 0], [0, 1e-5]],
+    crval=[0, 0],
+    enable_vacorr=True,
+):
     pipeline = make_mock_st_pipeline(
         corr_cls=corr_cls,
         v2ref=v2ref,
@@ -252,7 +249,7 @@ def make_mock_st_wcs(corr_cls, v2ref=0, v3ref=0, roll=0, crpix=[512, 512],
         crpix=crpix,
         cd=cd,
         crval=crval,
-        enable_vacorr=enable_vacorr
+        enable_vacorr=enable_vacorr,
     )
     wcs = gwcs.wcs.WCS(pipeline)
     wcs.bounding_box = ((-0.5, 1024 - 0.5), (-0.5, 2048 - 0.5))

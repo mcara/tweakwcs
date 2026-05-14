@@ -19,9 +19,9 @@ import numpy as np
 
 from . import __version__  # noqa: F401
 
-__all__ = ['planar_rot_3d']
+__all__ = ["planar_rot_3d"]
 
-__author__ = 'Mihai Cara'
+__author__ = "Mihai Cara"
 
 
 def planar_rot_3d(angle, axis):
@@ -35,7 +35,6 @@ def planar_rot_3d(angle, axis):
     axis = int(axis)
     cs = math.cos(angle)
     sn = math.sin(angle)
-    axisv = np.array(axis * [0.0] + [1.0] + (2 - axis) * [0.0],
-                     dtype=np.double)
+    axisv = np.array(axis * [0.0] + [1.0] + (2 - axis) * [0.0], dtype=np.double)
     mat_2d = np.array([[cs, sn], [-sn, cs]], dtype=np.double)
     return np.insert(np.insert(mat_2d, axis, [0.0, 0.0], 1), axis, axisv, 0)

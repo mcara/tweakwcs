@@ -2,10 +2,11 @@
 This package provides support for image alignment.
 
 """
-__docformat__ = 'restructuredtext'
 
-__taskname__ = 'tweakwcs'
-__author__ = 'Mihai Cara'
+__docformat__ = "restructuredtext"
+
+__taskname__ = "tweakwcs"
+__author__ = "Mihai Cara"
 
 
 from importlib.metadata import PackageNotFoundError, version
@@ -13,7 +14,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version(__name__)
 except PackageNotFoundError:
-    __version__ = ''
+    __version__ = ""
 
 
 # import deprecated classes:
@@ -44,21 +45,21 @@ from .wcsimage import (
 )
 
 __all__ = [
-    'FITSWCSCorrector',
-    'JWSTWCSCorrector',
-    'MatchCatalogs',
-    'MatchSourceConfusionError',
-    'RefCatalog',
-    'RomanWCSCorrector',
-    'ST_V2V3_WCSCorrector',
-    'WCSCorrector',
-    'WCSGroupCatalog',
-    'WCSImageCatalog',
-    'XYXYMatch',
-    'align_wcs',
-    'build_fit_matrix',
-    'convex_hull',
-    'fit_wcs',
-    'inv',
-    'iter_linear_fit',
+    "FITSWCSCorrector",
+    "JWSTWCSCorrector",
+    "MatchCatalogs",
+    "MatchSourceConfusionError",
+    "RefCatalog",
+    "RomanWCSCorrector",
+    "ST_V2V3_WCSCorrector",
+    "WCSCorrector",
+    "WCSGroupCatalog",
+    "WCSImageCatalog",
+    "XYXYMatch",
+    "align_wcs",
+    "build_fit_matrix",
+    "convex_hull",
+    "fit_wcs",
+    "inv",
+    "iter_linear_fit",
 ]
