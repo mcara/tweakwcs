@@ -5,8 +5,8 @@ Release Notes
 =============
 
 
-0.9.0 (06-Mar-2026)
-====================
+0.9.0 (14-May-2026)
+===================
 
 - Added ``ST_V2V3_WCSCorrector`` class to serve as a base class to support
   both JWST and Roman space telescopes' WCS corrections in V2-V3 frame. [#243]
