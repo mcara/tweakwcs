@@ -8,6 +8,7 @@ routines.
 :License: :doc:`LICENSE`
 
 """
+
 # STDLIB
 import logging
 
@@ -17,9 +18,9 @@ import numpy as np
 # LOCAL
 from . import __version__  # noqa: F401
 
-__author__ = 'Mihai Cara'
+__author__ = "Mihai Cara"
 
-__all__ = ['inv']
+__all__ = ["inv"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -62,7 +63,7 @@ def _find_max_linalg_type():
             max_type = np_type
             eps = 100 * np.finfo(max_type).eps
             if np.max(np.abs(r - np.identity(2, dtype=np_type))) > eps:  # pragma: no branch
-                log.warning('Loss of accuracy during matrix inversion.')
+                log.warning("Loss of accuracy during matrix inversion.")
             break
         except TypeError:
             continue
@@ -76,7 +77,7 @@ if _MAX_LINALG_TYPE is None:
 
 
 def inv(m):
-    """ This function computes inverse matrix using Gauss-Jordan elimination
+    """This function computes inverse matrix using Gauss-Jordan elimination
     with full pivoting. Computations are performed using ``numpy.longdouble``
     precision. On systems on which ``numpy.longdouble`` is equivalent to
     ``numpy.double`` this function reverts to `numpy.linalg.inv` for
@@ -100,7 +101,7 @@ def inv(m):
         invm = np.linalg.inv(np.array(m).astype(_MAX_LINALG_TYPE))
         # detect singularity:
         if not np.all(np.isfinite(invm)):
-            raise np.linalg.LinAlgError('Singular matrix.')
+            raise np.linalg.LinAlgError("Singular matrix.")
         return invm
 
     m = np.array(m, dtype=np.longdouble)
@@ -119,8 +120,7 @@ def inv(m):
     # forward Gauss elimination with full pivoting:
     for k in range(order):
         # find pivot:
-        im, jm = np.unravel_index(np.argmax(np.abs(m[k:, k:])),
-                                  (order - k, order - k))
+        im, jm = np.unravel_index(np.argmax(np.abs(m[k:, k:])), (order - k, order - k))
         im += k
         jm += k
 
@@ -128,7 +128,7 @@ def inv(m):
 
         # detect singularity:
         if np.abs(pv) < eps:
-            raise np.linalg.LinAlgError('Singular matrix.')
+            raise np.linalg.LinAlgError("Singular matrix.")
 
         if im != k or jm != k:
             # swap rows & columns:
@@ -147,14 +147,14 @@ def inv(m):
             qt = np.dot(qt, q)
 
         m[k, k:] /= pv
-        r = m[k, (k + 1):]
+        r = m[k, (k + 1) :]
 
         invm[k, :] /= pv
         w = invm[k, :]
 
-        for l in range(k + 1, order):  # noqa: E741
+        for l in range(k + 1, order):  # noqa: RUF100, E741
             pv2 = m[l, k]
-            m[l, (k + 1):] -= pv2 * r
+            m[l, (k + 1) :] -= pv2 * r
             m[l, k] = 0.0
             invm[l, :] -= pv2 * w
 
@@ -165,7 +165,7 @@ def inv(m):
 
     # detect singularity:
     if not np.all(np.isfinite(invm)):
-        raise np.linalg.LinAlgError('Singular matrix.')
+        raise np.linalg.LinAlgError("Singular matrix.")
 
     # undo permutations:
     invm = np.dot(qt, np.dot(invm, qt.T))

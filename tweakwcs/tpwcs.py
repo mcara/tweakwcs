@@ -8,17 +8,18 @@ of ``WCS``.
 :License: :doc:`LICENSE`
 
 """
+
 import logging
 import warnings
 
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
-from .correctors import TPWCS, JWSTgWCS, FITSWCS
 from . import __version__  # noqa: F401
+from .correctors import FITSWCS, TPWCS, JWSTgWCS
 
-__author__ = 'Mihai Cara'
+__author__ = "Mihai Cara"
 
-__all__ = ['TPWCS', 'JWSTgWCS', 'FITSWCS']
+__all__ = ["FITSWCS", "TPWCS", "JWSTgWCS"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -27,5 +28,5 @@ log.setLevel(logging.DEBUG)
 warnings.warn(
     "Module 'tweakwcs.tpwcs' has been deprecated since version 0.8.0. "
     "Please use corrector classes from the 'tweakwcs.correctors' module.",
-    AstropyDeprecationWarning
+    AstropyDeprecationWarning,
 )

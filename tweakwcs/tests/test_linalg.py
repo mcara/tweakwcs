@@ -4,16 +4,20 @@ A module containing unit tests for the `linalg` module.
 Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-import pytest
+
 import numpy as np
+import pytest
 
 from tweakwcs import linalg, linearfit
 
 
-@pytest.mark.parametrize('tp,expected', [
-    (np.float16, False),
-    (np.longdouble, True),
-])
+@pytest.mark.parametrize(
+    "tp,expected",
+    [
+        (np.float16, False),
+        (np.longdouble, True),
+    ],
+)
 def test_longdouble_cmp(tp, expected):
     assert linalg._is_longdouble_lte_flt_type(tp) == expected
 
@@ -64,7 +68,7 @@ def test_inv_order2():
         linalg._USE_NUMPY_LINALG_INV = use_numpy
 
 
-@pytest.mark.parametrize('use_numpy_inv', [True, False])
+@pytest.mark.parametrize("use_numpy_inv", [True, False])
 def test_inv_nonsquare(use_numpy_inv):
     use_numpy = linalg._USE_NUMPY_LINALG_INV
     linalg._USE_NUMPY_LINALG_INV = use_numpy_inv
@@ -75,7 +79,7 @@ def test_inv_nonsquare(use_numpy_inv):
             linalg._USE_NUMPY_LINALG_INV = use_numpy
 
 
-@pytest.mark.parametrize('use_numpy_inv', [True, False])
+@pytest.mark.parametrize("use_numpy_inv", [True, False])
 def test_inv_singular(use_numpy_inv):
     use_numpy = linalg._USE_NUMPY_LINALG_INV
     linalg._USE_NUMPY_LINALG_INV = use_numpy_inv
@@ -87,11 +91,11 @@ def test_inv_singular(use_numpy_inv):
             linalg._USE_NUMPY_LINALG_INV = use_numpy
 
 
-@pytest.mark.parametrize('use_numpy_inv', [True, False])
+@pytest.mark.parametrize("use_numpy_inv", [True, False])
 def test_inv_nan(use_numpy_inv):
     use_numpy = linalg._USE_NUMPY_LINALG_INV
     linalg._USE_NUMPY_LINALG_INV = use_numpy_inv
-    arr = np.array([[1.0, 1.0, -1.], [2.0, -2.1, 4.0], [-1.0, np.nan, 1.0]])
+    arr = np.array([[1.0, 1.0, -1.0], [2.0, -2.1, 4.0], [-1.0, np.nan, 1.0]])
     with pytest.raises(np.linalg.LinAlgError):
         try:
             linalg.inv(arr)

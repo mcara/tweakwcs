@@ -1,8 +1,7 @@
-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 Instrument-specific utility functions.
 
 """
 
-from .jwst_utils import *  # noqa
+from .jwst_utils import *  # noqa: RUF100, F401, F403

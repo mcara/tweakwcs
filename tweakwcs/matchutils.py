@@ -6,23 +6,24 @@ of shifts based on 2D histograms.
 :License: :doc:`LICENSE`
 
 """
+
 import logging
 import warnings
 from abc import ABC, abstractmethod
 
 import numpy as np
+from scipy import spatial
+from stsci.stimage import xyxymatch
+
 import astropy
 from astropy.utils.decorators import deprecated
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
-from stsci.stimage import xyxymatch
-from scipy import spatial
-
 from . import __version__  # noqa: F401
 
-__author__ = 'Mihai Cara'
+__author__ = "Mihai Cara"
 
-__all__ = ['MatchCatalogs', 'XYXYMatch', 'MatchSourceConfusionError']
+__all__ = ["MatchCatalogs", "MatchSourceConfusionError", "XYXYMatch"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -36,19 +37,14 @@ class MatchSourceConfusionError(RuntimeError):
 
 
 class MatchCatalogs(ABC):
-    """ A class that provides common interface for matching catalogs. """
-
-    def __init__(self):
-        """
-        """
+    """A class that provides common interface for matching catalogs."""
 
     @abstractmethod
     def __call__(self, refcat, imcat, **kwargs):
-        """ Performs catalog matching.
+        """Performs catalog matching.
 
         Parameters
         ----------
-
         refcat: astropy.table.Table
             A reference source catalog. Reference catalog must contain
             ``'TPx'`` and ``'TPy'`` columns that provide undistorted
@@ -71,11 +67,11 @@ class MatchCatalogs(ABC):
             sources in the ``refcat`` and ``imcat`` catalogs accordingly.
 
         """
-        pass
 
 
 class XYXYMatch(MatchCatalogs):
-    """ Catalog source matching in tangent plane. Uses ``xyxymatch``
+    """
+    Catalog source matching in tangent plane. Uses ``xyxymatch``
     algorithm to cross-match sources between this catalog and
     a reference catalog.
 
@@ -88,19 +84,20 @@ class XYXYMatch(MatchCatalogs):
         tangent plane.
 
     """
-    def __init__(self, searchrad=3.0, separation=0.5, use2dhist=True,
-                 xoffset=0.0, yoffset=0.0, tolerance=1.0):
+
+    def __init__(
+        self, searchrad=3.0, separation=0.5, use2dhist=True, xoffset=0.0, yoffset=0.0, tolerance=1.0
+    ):
         """
         Parameters
         ----------
-
         searchrad: float, optional
             The search radius for a match (in units of the tangent plane).
 
         separation: float, optional
             The  minimum  separation in the tangent plane (in units of
             the tangent plane) for sources in the image and reference
-            catalogs in order to be considered to be disctinct sources.
+            catalogs in order to be considered to be distinct sources.
             Objects closer together than ``separation`` distance
             are removed from the image and reference coordinate catalogs prior
             to matching. This parameter gets passed directly to
@@ -152,11 +149,10 @@ class XYXYMatch(MatchCatalogs):
         self._yoffset = float(yoffset)
 
     def __call__(self, refcat, imcat, tp_pscale=1.0, tp_units=None, **kwargs):
-        r""" Performs catalog matching.
+        r"""Performs catalog matching.
 
         Parameters
         ----------
-
         refcat: astropy.table.Table
             A reference source catalog. Reference catalog must contain
             ``'TPx'`` and ``'TPy'`` columns that provide undistorted
@@ -192,87 +188,86 @@ class XYXYMatch(MatchCatalogs):
         MatchSourceConfusionError
             Multiple sources matched a single reference source. Try different
             values for ``tolerance`` and ``separation`` to fix this error.
+
         """
         # Check catalogs:
         if not isinstance(refcat, astropy.table.Table):
-            raise TypeError("'refcat' must be an instance of "
-                            "astropy.table.Table")
+            raise TypeError("'refcat' must be an instance of astropy.table.Table")
 
         if not refcat:
-            raise ValueError("Reference catalog must contain at least one "
-                             "source.")
+            raise ValueError("Reference catalog must contain at least one source.")
 
         if not isinstance(imcat, astropy.table.Table):
-            raise TypeError("'imcat' must be an instance of "
-                            "astropy.table.Table")
+            raise TypeError("'imcat' must be an instance of astropy.table.Table")
 
         if not imcat:
-            raise ValueError("Image catalog must contain at least one "
-                             "source.")
+            raise ValueError("Image catalog must contain at least one source.")
 
-        if 'tp_wcs' in kwargs:
+        if "tp_wcs" in kwargs:
             warnings.warn(
                 "Argument 'tp_wcs' has been deprecated since version 0.8.1. "
                 "Please use 'tp_pscale' instead and populate 'TPx' and 'TPy' "
                 "columns of input catalogs.",
-                AstropyDeprecationWarning
+                AstropyDeprecationWarning,
             )
 
-        tp_wcs = kwargs.get('tp_wcs')
+        tp_wcs = kwargs.get("tp_wcs")
 
         if tp_wcs is None:
-            if 'TPx' not in refcat.colnames or 'TPy' not in refcat.colnames:
-                raise KeyError("When tangent plane WCS is not provided, "
-                               "'refcat' must contain both 'TPx' and 'TPy' "
-                               "columns.")
+            if "TPx" not in refcat.colnames or "TPy" not in refcat.colnames:
+                raise KeyError(
+                    "When tangent plane WCS is not provided, "
+                    "'refcat' must contain both 'TPx' and 'TPy' "
+                    "columns."
+                )
 
-            if 'TPx' not in imcat.colnames or 'TPy' not in imcat.colnames:
-                raise KeyError("When tangent plane WCS is not provided, "
-                               "'imcat' must contain both 'TPx' and 'TPy' "
-                               "columns.")
+            if "TPx" not in imcat.colnames or "TPy" not in imcat.colnames:
+                raise KeyError(
+                    "When tangent plane WCS is not provided, "
+                    "'imcat' must contain both 'TPx' and 'TPy' "
+                    "columns."
+                )
 
-            imxy = np.asarray([imcat['TPx'], imcat['TPy']]).T
-            refxy = np.asarray([refcat['TPx'], refcat['TPy']]).T
+            imxy = np.asarray([imcat["TPx"], imcat["TPy"]]).T
+            refxy = np.asarray([refcat["TPx"], refcat["TPy"]]).T
 
         else:
-            if 'RA' not in refcat.colnames or 'DEC' not in refcat.colnames:
-                raise KeyError("When tangent plane WCS is provided,  'refcat' "
-                               "must contain both 'RA' and 'DEC' columns.")
+            if "RA" not in refcat.colnames or "DEC" not in refcat.colnames:
+                raise KeyError(
+                    "When tangent plane WCS is provided,  'refcat' "
+                    "must contain both 'RA' and 'DEC' columns."
+                )
 
-            if 'x' not in imcat.colnames or 'y' not in imcat.colnames:
-                raise KeyError("When tangent plane WCS is provided,  'imcat' "
-                               "must contain both 'x' and 'y' columns.")
+            if "x" not in imcat.colnames or "y" not in imcat.colnames:
+                raise KeyError(
+                    "When tangent plane WCS is provided,  'imcat' "
+                    "must contain both 'x' and 'y' columns."
+                )
 
             # compute x & y in the tangent plane provided by tp_wcs:
-            imxy = np.asarray(
-                tp_wcs.det_to_tanp(imcat['x'], imcat['y'])
-            ).T
+            imxy = np.asarray(tp_wcs.det_to_tanp(imcat["x"], imcat["y"])).T
 
-            refxy = np.asarray(
-                tp_wcs.world_to_tanp(refcat['RA'], refcat['DEC'])
-            ).T
+            refxy = np.asarray(tp_wcs.world_to_tanp(refcat["RA"], refcat["DEC"])).T
 
-        imcat_name = imcat.meta.get('name', 'Unnamed')
+        imcat_name = imcat.meta.get("name", "Unnamed")
         if imcat_name is None:
-            imcat_name = 'Unnamed'
+            imcat_name = "Unnamed"
 
-        refcat_name = refcat.meta.get('name', 'Unnamed')
+        refcat_name = refcat.meta.get("name", "Unnamed")
         if refcat_name is None:
-            refcat_name = 'Unnamed'
+            refcat_name = "Unnamed"
 
-        log.info("Matching sources from '{:s}' catalog with sources from the "
-                 "reference '{:s}' catalog."
-                 .format(imcat_name, refcat_name))
+        log.info(
+            "Matching sources from '%s' catalog with sources from the reference '%s' catalog.",
+            imcat_name,
+            refcat_name,
+        )
 
         if self._use2dhist:
             # Determine xyoff (X,Y offset) and tolerance
             # to be used with xyxymatch:
             xyoff = _estimate_2dhist_shift(
-                imxy,
-                refxy,
-                searchrad=self._searchrad,
-                pscale=tp_pscale,
-                units=tp_units
+                imxy, refxy, searchrad=self._searchrad, pscale=tp_pscale, units=tp_units
             )
 
         else:
@@ -280,11 +275,7 @@ class XYXYMatch(MatchCatalogs):
 
         try:
             matches = xyxymatch(
-                imxy,
-                refxy,
-                origin=xyoff,
-                tolerance=self._tolerance,
-                separation=self._separation
+                imxy, refxy, origin=xyoff, tolerance=self._tolerance, separation=self._separation
             )
         except RuntimeError as e:
             msg = e.args[0]
@@ -292,7 +283,7 @@ class XYXYMatch(MatchCatalogs):
                 raise MatchSourceConfusionError(msg)
             raise e
 
-        return matches['ref_idx'], matches['input_idx']
+        return matches["ref_idx"], matches["input_idx"]
 
 
 def _xy_2dhist(imgxy, refxy, r):
@@ -309,26 +300,25 @@ def _xy_2dhist(imgxy, refxy, r):
 
     dx = imgxy[mi, 0] - refxy[mr, 0]
     dy = imgxy[mi, 1] - refxy[mr, 1]
-    idx = np.where((dx < r + 0.5) & (dx >= -r - 0.5) &
-                   (dy < r + 0.5) & (dy >= -r - 0.5))
+    idx = np.where((dx < r + 0.5) & (dx >= -r - 0.5) & (dy < r + 0.5) & (dy >= -r - 0.5))
     r = int(np.ceil(r))
-    h = np.histogram2d(dx[idx], dy[idx], 2 * r + 1,
-                       [[-r - 0.5, r + 0.5], [-r - 0.5, r + 0.5]])
+    h = np.histogram2d(dx[idx], dy[idx], 2 * r + 1, [[-r - 0.5, r + 0.5], [-r - 0.5, r + 0.5]])
     return h[0].T
 
 
 def _estimate_2dhist_shift(imgxy, refxy, searchrad=3.0, pscale=1.0, units=None):
-    """ Create a 2D matrix-histogram which contains the delta between each
-        XY position and each UV position. Then estimate initial offset
-        between catalogs.
+    """
+    Create a 2D matrix-histogram which contains the delta between each
+    XY position and each UV position. Then estimate initial offset
+    between catalogs.
 
-        ``pscale`` is used to make bins of size approximately equal to
-        image pixel.
+    ``pscale`` is used to make bins of size approximately equal to
+    image pixel.
 
     """
     log.info("Computing initial guess for X and Y shifts...")
     if units is None:
-        units = 'tangent plane units'
+        units = "tangent plane units"
 
     # create ZP matrix
     zpmat = _xy_2dhist(imgxy / pscale, refxy / pscale, r=searchrad / pscale)
@@ -336,9 +326,7 @@ def _estimate_2dhist_shift(imgxy, refxy, searchrad=3.0, pscale=1.0, units=None):
     nonzeros = np.count_nonzero(zpmat)
     if nonzeros == 0:
         # no matches within search radius. Return (0, 0):
-        log.warning(
-            f"No matches found within a search radius of {searchrad:g} ({units})."
-        )
+        log.warning("No matches found within a search radius of %g (%s).", searchrad, units)
         return 0.0, 0.0
 
     elif nonzeros == 1:
@@ -349,29 +337,29 @@ def _estimate_2dhist_shift(imgxy, refxy, searchrad=3.0, pscale=1.0, units=None):
         yp = pscale * yp - searchrad
 
         log.info(
-            f"Found initial X and Y shifts of {xp:.4g}, {yp:.4g} ({units}) "
-            f"based on a single non-zero bin and {int(maxval):d} matches."
+            "Found initial X and Y shifts of %g, %g (%s) based on a single "
+            "non-zero bin and %d matches.",
+            xp,
+            yp,
+            units,
+            int(maxval),
         )
         return xp, yp
 
-    (xp, yp), fit_status, fit_sl = _find_peak(
-        zpmat,
-        peak_fit_box=5,
-        mask=zpmat > 0
-    )
+    (xp, yp), fit_status, fit_sl = _find_peak(zpmat, peak_fit_box=5, mask=zpmat > 0)
 
-    if fit_status.startswith('ERROR'):
-        log.warning(
-            f"No valid shift found within a search radius of {searchrad:g} {units}."
-        )
+    if fit_status.startswith("ERROR"):
+        log.warning("No valid shift found within a search radius of %g %s.", searchrad, units)
         return 0.0, 0.0
 
     xp = pscale * xp - searchrad
     yp = pscale * yp - searchrad
 
-    if fit_status == 'WARNING:EDGE':
-        log.info("Found peak in the 2D histogram lies at the edge of the "
-                 "histogram. Try increasing 'searchrad' for improved results.")
+    if fit_status == "WARNING:EDGE":
+        log.info(
+            "Found peak in the 2D histogram lies at the edge of the "
+            "histogram. Try increasing 'searchrad' for improved results."
+        )
 
     flux = int(zpmat[fit_sl].sum())
 
@@ -385,22 +373,24 @@ def _estimate_2dhist_shift(imgxy, refxy, searchrad=3.0, pscale=1.0, units=None):
         bkg = zpmat[zpmat_mask].mean()
         sig = maxval / np.sqrt(bkg)
         log.info(
-            f"Found initial X and Y shifts of {xp:.4g}, {yp:.4g} ({units}) "
-            f"with significance of {sig:.4g} and {flux:d} matches."
+            "Found initial X and Y shifts of %g, %g (%s) with significance of %g and %d matches.",
+            xp,
+            yp,
+            units,
+            sig,
+            flux,
         )
 
     else:
-        log.warning("Unable to estimate significance of the detection of the "
-                    "initial shift.")
+        log.warning("Unable to estimate significance of the detection of the initial shift.")
         log.info(
-            f"Found initial X and Y shifts of {xp:.4g}, {yp:.4g} ({units}) "
-            f"with {flux:d} matches."
+            "Found initial X and Y shifts of %g, %g (%s) with %d matches.", xp, yp, units, flux
         )
 
     return xp, yp
 
 
-def _find_peak(data, peak_fit_box=5, mask=None):
+def _find_peak(data, peak_fit_box=5, mask=None):  # noqa: PLR0911
     """
     Find location of the peak in an array. This is done by fitting a second
     degree 2D polynomial to the data within a `peak_fit_box` and computing the
@@ -439,11 +429,11 @@ def _find_peak(data, peak_fit_box=5, mask=None):
         - ``'ERROR:NODATA'``: Not enough valid data to perform the fit; The
           returned coordinate is the center of input array;
         - ``'WARNING:EDGE'``: Peak lies on the edge of the input array.
-          Returned coordinates are the result of a discreet search;
+          Returned coordinates are the result of a discrete search;
         - ``'WARNING:BADFIT'``: Performed fid did not find a maximum or the
           estimated maximum is outside of the fit box. Returned
           coordinates are the result of either a center-of-mass estimate or
-          a discreet search;
+          a discrete search;
         - ``'WARNING:CENTER-OF-MASS'``: Returned coordinates are the result
           of a center-of-mass estimate instead of a polynomial fit. This is
           either due to too few points to perform a fit, polynomial peak being
@@ -470,11 +460,10 @@ def _find_peak(data, peak_fit_box=5, mask=None):
         dt = d.sum()
         if dt == 0.0:
             coord = ((x2 + x1 - 1.0) / 2.0, (y2 + y1 - 1.0) / 2.0)
-            return coord, 'ERROR:NODATA'
+            return coord, "ERROR:NODATA"
         xc = np.dot(vx, d) / dt
         yc = np.dot(vy, d) / dt
-        return ((float(x1 + xc - 1), float(y1 + yc - 1)),
-                'WARNING:CENTER-OF-MASS')
+        return ((float(x1 + xc - 1), float(y1 + yc - 1)), "WARNING:CENTER-OF-MASS")
 
     # check arguments:
     if peak_fit_box < 1:
@@ -493,7 +482,7 @@ def _find_peak(data, peak_fit_box=5, mask=None):
     if i.size == 0:
         # no valid data:
         coord = ((nx - 1.0) / 2.0, (ny - 1.0) / 2.0)
-        return coord, 'ERROR:NODATA', np.s_[0:ny, 0:nx]
+        return coord, "ERROR:NODATA", np.s_[0:ny, 0:nx]
 
     ind = np.argmax(data[mask])
     imax = i[ind]
@@ -503,7 +492,7 @@ def _find_peak(data, peak_fit_box=5, mask=None):
     if data[jmax, imax] < 1:
         # no valid data: we need some counts in the histogram bins
         coord = ((nx - 1.0) / 2.0, (ny - 1.0) / 2.0)
-        return coord, 'ERROR:NODATA', np.s_[0:ny, 0:nx]
+        return coord, "ERROR:NODATA", np.s_[0:ny, 0:nx]
 
     # choose a box around maxval pixel:
     x1 = max(0, imax - peak_fit_box // 2)
@@ -513,7 +502,7 @@ def _find_peak(data, peak_fit_box=5, mask=None):
 
     # if peak is at the edge of the box, return integer indices of the max:
     if imax == x1 or imax == x2 - 1 or jmax == y1 or jmax == y2 - 1:
-        return coord, 'WARNING:EDGE', np.s_[y1:y2, x1:x2]
+        return coord, "WARNING:EDGE", np.s_[y1:y2, x1:x2]
 
     # expand the box if needed:
     if (x2 - x1) < peak_fit_box:  # pragma: no branch
@@ -553,7 +542,7 @@ def _find_peak(data, peak_fit_box=5, mask=None):
         if not np.all(np.isfinite(c)):
             raise np.linalg.LinAlgError("Results of the fit are not finite.")
     except np.linalg.LinAlgError as e:
-        log.warning("Least squares failed!\n{}".format(e))
+        log.warning("Least squares failed!\n%s", e)
 
         # attempt center-of-mass instead:
         coord, fit_status = _center_of_mass(v, d, x1, x2, y1, y2)
@@ -565,16 +554,16 @@ def _find_peak(data, peak_fit_box=5, mask=None):
     if det <= 0 or ((c20 > 0.0 and c02 >= 0.0) or (c20 >= 0.0 and c02 > 0.0)):
         # polynomial does not have max. return maximum value in the data:
         coord, fit_status = _center_of_mass(v, d, x1, x2, y1, y2)
-        if fit_status.startswith('ERROR'):
+        if fit_status.startswith("ERROR"):
             return coord, fit_status, fit_slice
-        return coord, 'WARNING:BADFIT', fit_slice
+        return coord, "WARNING:BADFIT", fit_slice
 
     xm = (c01 * c11 - 2.0 * c02 * c10) / det + x1 - 1
     ym = (c10 * c11 - 2.0 * c01 * c20) / det + y1 - 1
 
     if x1 <= xm <= (x2 - 1.0) and y1 <= ym <= (y2 - 1.0):
         coord = (xm, ym)
-        fit_status = 'SUCCESS'
+        fit_status = "SUCCESS"
 
     else:
         coord, fit_status = _center_of_mass(v, d, x1, x2, y1, y2)
@@ -582,6 +571,6 @@ def _find_peak(data, peak_fit_box=5, mask=None):
     return coord, fit_status, fit_slice
 
 
-@deprecated(since='0.8.0', alternative='XYXYMatch')
+@deprecated(since="0.8.0", alternative="XYXYMatch")
 class TPMatch(XYXYMatch):
     pass

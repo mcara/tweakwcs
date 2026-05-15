@@ -8,44 +8,40 @@ sets of 2D points.
 :License: :doc:`LICENSE`
 
 """
+
 import logging
 import numbers
 
-import astropy
 import numpy as np
 from packaging.version import Version
 
-if Version(astropy.__version__) >= Version('5.1'):
-    from astropy.modeling.fitting import fitter_to_model_params
-    from astropy.modeling.fitting import LMLSQFitter
+import astropy
+
+if Version(astropy.__version__) >= Version("5.1"):
+    from astropy.modeling.fitting import LMLSQFitter, fitter_to_model_params
 else:
-    from astropy.modeling.fitting import (_fitter_to_model_params as
-                                          fitter_to_model_params)
     from astropy.modeling.fitting import LevMarLSQFitter as LMLSQFitter
+    from astropy.modeling.fitting import _fitter_to_model_params as fitter_to_model_params
 
-from . linalg import inv
 from . import __version__  # noqa: F401
+from .linalg import inv
 
-__author__ = 'Mihai Cara, Warren Hack'
+__author__ = "Mihai Cara, Warren Hack"
 
 __all__ = [
-    'iter_linear_fit',
-    'build_fit_matrix',
-    'SUPPORTED_FITGEOM_MODES',
-    '_LevMarLSQFitter2x2',
+    "SUPPORTED_FITGEOM_MODES",
+    "_LevMarLSQFitter2x2",
+    "build_fit_matrix",
+    "iter_linear_fit",
 ]
 
 # Supported fitgeom modes and corresponding minobj
-SUPPORTED_FITGEOM_MODES = {
-    'shift': 1,
-    'rshift': 2,
-    'rscale': 2,
-    'general': 3
-}
+SUPPORTED_FITGEOM_MODES = {"shift": 1, "rshift": 2, "rscale": 2, "general": 3}
 
 _FITGEOM_KEYS = tuple(SUPPORTED_FITGEOM_MODES.keys())
-_SUPPORTED_FITGEOM_EN_STR = (', '.join(map(repr, _FITGEOM_KEYS[:-1])) +
-                             ', or ' + repr(_FITGEOM_KEYS[-1]))
+_SUPPORTED_FITGEOM_EN_STR = (
+    ", ".join(map(repr, _FITGEOM_KEYS[:-1])) + ", or " + repr(_FITGEOM_KEYS[-1])
+)
 
 
 log = logging.getLogger(__name__)
@@ -53,8 +49,7 @@ log.setLevel(logging.DEBUG)
 
 
 class SingularMatrixError(Exception):
-    """ An error class used to report when a singular matrix is encountered."""
-    pass
+    """An error class used to report when a singular matrix is encountered."""
 
 
 class NotEnoughPointsError(Exception):
@@ -62,12 +57,19 @@ class NotEnoughPointsError(Exception):
     An error class used to report when there are not enough points to
     find parameters of a linear transformation.
     """
-    pass
 
 
-def iter_linear_fit(xy, uv, wxy=None, wuv=None,
-                    fitgeom='general', center=None,
-                    nclip=3, sigma=(3.0, 'rmse'), clip_accum=False):
+def iter_linear_fit(
+    xy,
+    uv,
+    wxy=None,
+    wuv=None,
+    fitgeom="general",
+    center=None,
+    nclip=3,
+    sigma=(3.0, "rmse"),
+    clip_accum=False,
+):
     r"""
     Compute linear transformation parameters that "best" (in the sense of
     minimizing residuals) transform ``uv`` source position to ``xy``
@@ -237,64 +239,70 @@ def iter_linear_fit(xy, uv, wxy=None, wuv=None,
     try:
         minobj = SUPPORTED_FITGEOM_MODES[fitgeom]
 
-        if fitgeom == 'general':
+        if fitgeom == "general":
             linear_fit = fit_general
-        elif fitgeom == 'rscale':
+        elif fitgeom == "rscale":
             linear_fit = fit_rscale
-        elif fitgeom == 'rshift':
+        elif fitgeom == "rshift":
             linear_fit = fit_rshift
-        elif fitgeom == 'shift':
+        elif fitgeom == "shift":
             linear_fit = fit_shifts
         else:  # pragma: no cover
-            raise AssertionError("Notify developer: fitter selector block is "
-                                 "out-of-sync with SUPPORTED_FITGEOM_MODES.")
+            raise AssertionError(
+                "Notify developer: fitter selector block is "
+                "out-of-sync with SUPPORTED_FITGEOM_MODES."
+            )
 
     except KeyError:
-        raise ValueError("Unsupported 'fitgeom' value: '{}'".format(fitgeom))
+        raise ValueError(f"Unsupported 'fitgeom' value: '{fitgeom}'")
 
     xy = np.array(xy, dtype=np.longdouble)
     uv = np.array(uv, dtype=np.longdouble)
 
     if len(xy.shape) != 2 or xy.shape[1] != 2 or uv.shape != xy.shape:
-        raise ValueError("Input coordinate arrays 'xy' and 'uv' must be of "
-                         "shape (N, 2) where N is the number of coordinate "
-                         "points.")
+        raise ValueError(
+            "Input coordinate arrays 'xy' and 'uv' must be of "
+            "shape (N, 2) where N is the number of coordinate "
+            "points."
+        )
 
     wmask = np.ones(len(xy), dtype=np.bool_)
 
     if wxy is not None:
         wxy = np.asarray(wxy)
         if len(wxy.shape) != 1 or wxy.shape[0] != xy.shape[0]:
-            raise ValueError("Weights 'wxy' must be a 1-dimensional vector "
-                             "of lengths equal to the number of input points.")
+            raise ValueError(
+                "Weights 'wxy' must be a 1-dimensional vector "
+                "of lengths equal to the number of input points."
+            )
         wmask *= wxy > 0.0
 
     if wuv is not None:
         wuv = np.asarray(wuv)
         if len(wuv.shape) != 1 or wuv.shape[0] != xy.shape[0]:
-            raise ValueError("Weights 'wuv' must be a 1-dimensional vector "
-                             "of lengths equal to the number of input points.")
+            raise ValueError(
+                "Weights 'wuv' must be a 1-dimensional vector "
+                "of lengths equal to the number of input points."
+            )
         wmask *= wuv > 0.0
 
     mask = wmask
 
     if sigma is None and nclip is not None and nclip > 0:
-        raise ValueError("Argument 'sigma' cannot be None when 'nclip' is "
-                         "a positive number.")
+        raise ValueError("Argument 'sigma' cannot be None when 'nclip' is a positive number.")
 
     if isinstance(sigma, numbers.Number):
-        sigstat = 'rmse'  # default value
+        sigstat = "rmse"  # default value
         nsigma = float(sigma)
 
     elif sigma is not None:
         nsigma = float(sigma[0])
         sigstat = sigma[1]
-        if sigstat not in ['rmse', 'mae', 'std']:
+        if sigstat not in ["rmse", "mae", "std"]:
             raise ValueError("Unsupported sigma statistics value.")
 
     if sigma is not None and nsigma <= 0.0:
-        raise ValueError("The value of sigma for clipping iterations must be "
-                         "positive.")
+        raise ValueError("The value of sigma for clipping iterations must be positive.")
 
     if nclip is None:
         nclip = 0
@@ -304,9 +312,11 @@ def iter_linear_fit(xy, uv, wxy=None, wuv=None,
         nclip = int(nclip)
 
     if np.count_nonzero(mask) == minobj:
-        log.warning("The number of sources for the fit is smaller than the "
-                    "minimum number of sources necessary for the requested "
-                    "'fitgeom'.")
+        log.warning(
+            "The number of sources for the fit is smaller than the "
+            "minimum number of sources necessary for the requested "
+            "'fitgeom'."
+        )
         log.warning("Resetting number of clipping iterations to 0.")
         nclip = 0
 
@@ -319,7 +329,7 @@ def iter_linear_fit(xy, uv, wxy=None, wuv=None,
     xy[mask] -= center_ld
     uv[mask] -= center_ld
 
-    log.info("Performing '{:s}' fit".format(fitgeom))
+    log.info("Performing '%s' fit", fitgeom)
 
     # initial fit:
     wmxy = None if wxy is None else wxy[mask]
@@ -329,7 +339,7 @@ def iter_linear_fit(xy, uv, wxy=None, wuv=None,
     # clipping iterations:
     effective_nclip = 0
     for n in range(nclip):
-        resids = fit['resids']
+        resids = fit["resids"]
 
         # redefine what pixels will be included in next iteration
         cutoff = nsigma * fit[sigstat]
@@ -349,47 +359,46 @@ def iter_linear_fit(xy, uv, wxy=None, wuv=None,
         wmuv = None if wuv is None else wuv[mask]
         fit = linear_fit(xy[mask], uv[mask], wmxy, wmuv)
 
-    fit['center'] = center
-    fit['center_ld'] = center_ld
-    fit['fitmask'] = mask
-    fit['eff_nclip'] = effective_nclip
+    fit["center"] = center
+    fit["center_ld"] = center_ld
+    fit["fitmask"] = mask
+    fit["eff_nclip"] = effective_nclip
     return fit
 
 
 def _compute_stat(fit, residuals, weights):
     if weights is None:
-        fit['rmse'] = float(np.sqrt(np.mean(2 * residuals**2)))
-        fit['mae'] = float(np.mean(np.linalg.norm(residuals, axis=1)))
-        fit['std'] = float(np.linalg.norm(residuals.std(axis=0)))
+        fit["rmse"] = float(np.sqrt(np.mean(2 * residuals**2)))
+        fit["mae"] = float(np.mean(np.linalg.norm(residuals, axis=1)))
+        fit["std"] = float(np.linalg.norm(residuals.std(axis=0)))
     else:
         # assume all weights > 0 (this should be insured by the caller => no
         # need to repeat the check here)
         npts = len(weights)
         wt = np.sum(weights)
         if npts == 0 or wt == 0.0:
-            fit['rmse'] = float('nan')
-            fit['mae'] = float('nan')
-            fit['std'] = float('nan')
+            fit["rmse"] = float("nan")
+            fit["mae"] = float("nan")
+            fit["std"] = float("nan")
             return
 
         w = weights / wt
-        fit['rmse'] = float(np.sqrt(np.sum(np.dot(w, residuals**2))))
-        fit['mae'] = float(np.dot(w, np.linalg.norm(residuals, axis=1)))
+        fit["rmse"] = float(np.sqrt(np.sum(np.dot(w, residuals**2))))
+        fit["mae"] = float(np.dot(w, np.linalg.norm(residuals, axis=1)))
 
         if npts == 1:
-            fit['std'] = 0.0
+            fit["std"] = 0.0
         else:
             # see:
             # https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Reliability_weights_2
             wmean = np.dot(w, residuals)
-            fit['std'] = float(
-                np.sqrt(np.sum(np.dot(w, (residuals - wmean)**2) /
-                               (1.0 - np.sum(w**2))))
+            fit["std"] = float(
+                np.sqrt(np.sum(np.dot(w, (residuals - wmean) ** 2) / (1.0 - np.sum(w**2))))
             )
 
 
 def fit_shifts(xy, uv, wxy=None, wuv=None):
-    """ Fits (non-iteratively and without sigma-clipping) a displacement
+    """Fits (non-iteratively and without sigma-clipping) a displacement
     transformation only between input lists of positions ``xy`` and ``uv``.
     When weights are provided, a weighted fit is performed. Parameter
     descriptions and return values are identical to those in `iter_linear_fit`,
@@ -399,9 +408,7 @@ def fit_shifts(xy, uv, wxy=None, wuv=None):
 
     """
     if xy.size == 0:
-        raise NotEnoughPointsError(
-            "At least one point is required to find shifts."
-        )
+        raise NotEnoughPointsError("At least one point is required to find shifts.")
 
     diff_pts = np.subtract(xy, uv, dtype=np.longdouble)
 
@@ -429,8 +436,7 @@ def fit_shifts(xy, uv, wxy=None, wuv=None):
             raise ValueError("Invalid weights: weights must be non-negative.")
 
         if not np.sum(w > 0, dtype=int):
-            raise ValueError("Not enough valid data for 'shift' fit: "
-                             "too many weights are zero!")
+            raise ValueError("Not enough valid data for 'shift' fit: too many weights are zero!")
 
         w /= np.sum(w, dtype=np.longdouble)
 
@@ -440,9 +446,9 @@ def fit_shifts(xy, uv, wxy=None, wuv=None):
     p = np.array([1.0, 0.0, meanx], dtype=np.longdouble)
     q = np.array([0.0, 1.0, meany], dtype=np.longdouble)
 
-    fit = _build_fit(p, q, 'shift')
-    resids = diff_pts - fit['shift']
-    fit['resids'] = resids.astype(np.double)
+    fit = _build_fit(p, q, "shift")
+    resids = diff_pts - fit["shift"]
+    fit["resids"] = resids.astype(np.double)
     _compute_stat(fit, residuals=resids, weights=w)
     return fit
 
@@ -451,7 +457,7 @@ def fit_shifts(xy, uv, wxy=None, wuv=None):
 # by Warren Hack. Support for axis flips and for constraining scale
 # added by Mihai Cara.
 def fit_rscale(xy, uv, wxy=None, wuv=None, scale=None):
-    """ Fits (non-iteratively and without sigma-clipping) a displacement,
+    """Fits (non-iteratively and without sigma-clipping) a displacement,
     rotation and (optionally) scale transformations between input lists of
     positions ``xy`` and ``uv``. When weights are provided, a weighted fit
     is performed. Parameter descriptions and return values are identical to
@@ -469,14 +475,13 @@ def fit_rscale(xy, uv, wxy=None, wuv=None, scale=None):
     """
     if len(xy) < 2:
         raise NotEnoughPointsError(
-            "At least two points are required to find shifts, rotation, and "
-            "scale."
+            "At least two points are required to find shifts, rotation, and scale."
         )
 
     if scale is None:
-        fitgeom = 'rscale'
+        fitgeom = "rscale"
     elif scale > 0:
-        fitgeom = 'rshift'
+        fitgeom = "rshift"
     else:
         raise ValueError("'scale' argument must be None or a positive number.")
 
@@ -525,8 +530,9 @@ def fit_rscale(xy, uv, wxy=None, wuv=None, scale=None):
             raise ValueError("Invalid weights: weights must be non-negative.")
 
         if np.sum(w > 0) < 2:
-            raise ValueError(f"Not enough valid data for '{fitgeom:s}' fit: "
-                             "too many weights are zero!")
+            raise ValueError(
+                f"Not enough valid data for '{fitgeom:s}' fit: too many weights are zero!"
+            )
 
         w /= np.sum(w, dtype=np.longdouble)
         xm = np.dot(w, x)
@@ -572,9 +578,7 @@ def fit_rscale(xy, uv, wxy=None, wuv=None, scale=None):
     elif su2v2 > 0.0:
         mag = s_num / su2v2
     else:
-        raise SingularMatrixError(
-            "Singular matrix: suspected colinear points."
-        )
+        raise SingularMatrixError("Singular matrix: suspected colinear points.")
 
     if det < 0:
         # "flip" y-axis (reflection about x-axis *after* rotation)
@@ -597,14 +601,14 @@ def fit_rscale(xy, uv, wxy=None, wuv=None, scale=None):
 
     # Return the shift, rotation, and scale changes
     fit = _build_fit(p, q, fitgeom=fitgeom)
-    resids = xy - np.dot(uv, fit['matrix_ld'].T) - fit['shift_ld']
-    fit['resids'] = resids.astype(np.double)
+    resids = xy - np.dot(uv, fit["matrix_ld"].T) - fit["shift_ld"]
+    fit["resids"] = resids.astype(np.double)
     _compute_stat(fit, residuals=resids, weights=w)
     return fit
 
 
 def fit_rshift(xy, uv, wxy=None, wuv=None):
-    """ Fits (non-iteratively and without sigma-clipping) a displacement,
+    """Fits (non-iteratively and without sigma-clipping) a displacement,
     rotation between input lists of positions ``xy`` and ``uv``. When weights
     are provided, a weighted fit is performed. Parameter descriptions and
     return values are identical to those in `iter_linear_fit`, except
@@ -619,7 +623,7 @@ def fit_rshift(xy, uv, wxy=None, wuv=None):
 
 
 def fit_general(xy, uv, wxy=None, wuv=None):
-    """ Fits (non-iteratively and without sigma-clipping) a displacement,
+    """Fits (non-iteratively and without sigma-clipping) a displacement,
     rotation, scale, and skew transformations (i.e., the full ``2x2``
     transformation matrix) between input lists of positions
     ``xy`` and ``uv``. When weights are provided, a weighted fit is performed.
@@ -631,8 +635,7 @@ def fit_general(xy, uv, wxy=None, wuv=None):
     """
     if len(xy) < 3:
         raise NotEnoughPointsError(
-            "At least three points are required to find 6-parameter linear "
-            "affine transformations."
+            "At least three points are required to find 6-parameter linear affine transformations."
         )
 
     x = np.array(xy[:, 0], dtype=np.longdouble)
@@ -676,8 +679,7 @@ def fit_general(xy, uv, wxy=None, wuv=None):
             raise ValueError("Invalid weights: weights must be non-negative.")
 
         if np.sum(w > 0) < 3:
-            raise ValueError("Not enough valid data for 'general' fit: "
-                             "too many weights are zero!")
+            raise ValueError("Not enough valid data for 'general' fit: too many weights are zero!")
 
         # Set up products used for computing the fit
         sw = np.sum(w, dtype=np.longdouble)
@@ -694,29 +696,24 @@ def fit_general(xy, uv, wxy=None, wuv=None):
         svv = np.dot(w, v * v)
         suv = np.dot(w, u * v)
 
-    m = np.array([[su, sv, sw], [suu, suv, su], [suv, svv, sv]],
-                 dtype=np.longdouble)
+    m = np.array([[su, sv, sw], [suu, suv, su], [suv, svv, sv]], dtype=np.longdouble)
     a = np.array([sx, sxu, sxv], dtype=np.longdouble)
     b = np.array([sy, syu, syv], dtype=np.longdouble)
 
     try:
         inv_m = inv(m)
     except np.linalg.LinAlgError:
-        raise SingularMatrixError(
-            "Singular matrix: suspected colinear points."
-        )
+        raise SingularMatrixError("Singular matrix: suspected colinear points.")
 
     p = np.dot(inv_m, a)
     q = np.dot(inv_m, b)
     if not (np.all(np.isfinite(p)) and np.all(np.isfinite(q))):
-        raise SingularMatrixError(
-            "Singular matrix: suspected colinear points."
-        )  # pragma: no cover
+        raise SingularMatrixError("Singular matrix: suspected colinear points.")  # pragma: no cover
 
     # Return the shift, rotation, and scale changes
-    fit = _build_fit(p, q, 'general')
-    resids = xy - np.dot(uv, fit['matrix_ld'].T) - fit['shift_ld']
-    fit['resids'] = resids.astype(np.double)
+    fit = _build_fit(p, q, "general")
+    resids = xy - np.dot(uv, fit["matrix_ld"].T) - fit["shift_ld"]
+    fit["resids"] = resids.astype(np.double)
     _compute_stat(fit, residuals=resids, weights=w)
     return fit
 
@@ -737,20 +734,20 @@ def _build_fit(p, q, fitgeom):
     # Skew is zero for all fitgeom except 'general':
     skew = 0.0
 
-    if fitgeom == 'shift':
+    if fitgeom == "shift":
         fit = {
-            'shift': np.array([p[2], q[2]], dtype=np.double),
-            'shift_ld': np.array([p[2], q[2]], dtype=np.longdouble),
-            'matrix': np.array(fit_matrix, dtype=np.double),
-            'matrix_ld': np.array(fit_matrix, dtype=np.longdouble),
-            'proper_rot': 0.0,
-            'rot': (0.0, 0.0),
-            '<rot>': 0.0,
-            'scale': (1.0, 1.0),
-            '<scale>': 1.0,
-            'skew': 0.0,
-            'proper': proper,
-            'fitgeom': 'shift'
+            "shift": np.array([p[2], q[2]], dtype=np.double),
+            "shift_ld": np.array([p[2], q[2]], dtype=np.longdouble),
+            "matrix": np.array(fit_matrix, dtype=np.double),
+            "matrix_ld": np.array(fit_matrix, dtype=np.longdouble),
+            "proper_rot": 0.0,
+            "rot": (0.0, 0.0),
+            "<rot>": 0.0,
+            "scale": (1.0, 1.0),
+            "<scale>": 1.0,
+            "skew": 0.0,
+            "proper": proper,
+            "fitgeom": "shift",
         }
 
         return fit
@@ -758,8 +755,8 @@ def _build_fit(p, q, fitgeom):
     # Compute average scale:
     s = np.sqrt(np.abs(det))
     # Compute scales for each axis:
-    if fitgeom == 'general':
-        sx, sy = np.sqrt(p[:2]**2 + q[:2]**2)
+    if fitgeom == "general":
+        sx, sy = np.sqrt(p[:2] ** 2 + q[:2] ** 2)
     else:
         sx = s
         sy = s
@@ -772,11 +769,10 @@ def _build_fit(p, q, fitgeom):
     # This will also act as *some sort* of "average rotation" even for
     # transformations with different rot_x and rot_y:
     prop_rot = np.rad2deg(
-        np.arctan2(wfit[0, 1] - sdet * wfit[1, 0],
-                   wfit[0, 0] + sdet * wfit[1, 1])
+        np.arctan2(wfit[0, 1] - sdet * wfit[1, 0], wfit[0, 0] + sdet * wfit[1, 1])
     )
 
-    if proper and fitgeom in ['rshift', 'rscale']:
+    if proper and fitgeom in ["rshift", "rscale"]:
         rotx = prop_rot
         roty = prop_rot
         rot = prop_rot
@@ -788,18 +784,18 @@ def _build_fit(p, q, fitgeom):
         skew = np.mod(roty - rotx - 180.0, 360.0) - 180.0
 
     fit = {
-        'shift': np.array([p[2], q[2]], dtype=np.double),
-        'shift_ld': np.array([p[2], q[2]], dtype=np.longdouble),
-        'matrix': np.array(fit_matrix, dtype=np.double),
-        'matrix_ld': np.array(fit_matrix, dtype=np.longdouble),
-        'proper_rot': float(prop_rot),
-        'rot': (float(rotx), float(roty)),
-        '<rot>': float(rot),
-        'scale': (float(sx), float(sy)),
-        '<scale>': float(s),
-        'skew': float(skew),
-        'proper': proper,
-        'fitgeom': fitgeom
+        "shift": np.array([p[2], q[2]], dtype=np.double),
+        "shift_ld": np.array([p[2], q[2]], dtype=np.longdouble),
+        "matrix": np.array(fit_matrix, dtype=np.double),
+        "matrix_ld": np.array(fit_matrix, dtype=np.longdouble),
+        "proper_rot": float(prop_rot),
+        "rot": (float(rotx), float(roty)),
+        "<rot>": float(rot),
+        "scale": (float(sx), float(sy)),
+        "<scale>": float(s),
+        "skew": float(skew),
+        "proper": proper,
+        "fitgeom": fitgeom,
     }
 
     return fit
@@ -834,24 +830,24 @@ def build_fit_matrix(rot, scale=1):
        transformation.
 
     """
-    if hasattr(rot, '__iter__'):
+    if hasattr(rot, "__iter__"):
         rx, ry = map(np.deg2rad, rot)
     else:
         rx = ry = np.deg2rad(float(rot))
 
-    if hasattr(scale, '__iter__'):
+    if hasattr(scale, "__iter__"):
         sx, sy = scale
     else:
         sx = sy = float(scale)
 
-    matrix = np.array([[sx * np.cos(rx), sy * np.sin(ry)],
-                       [-sx * np.sin(rx), sy * np.cos(ry)]])
+    matrix = np.array([[sx * np.cos(rx), sy * np.sin(ry)], [-sx * np.sin(rx), sy * np.cos(ry)]])
 
     return matrix
 
 
 class _LevMarLSQFitter2x2(LMLSQFitter):
-    """ Performs fits of 2D vector-models to 2D reference points. """
+    """Performs fits of 2D vector-models to 2D reference points."""
+
     def objective_function(self, fps, *args, **kwargs):
         model, weights, inputs, meas, *_ = args
         fitter_to_model_params(model, fps)

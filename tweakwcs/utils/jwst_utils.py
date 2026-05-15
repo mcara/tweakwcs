@@ -8,7 +8,7 @@ and other functions from the ``imalign`` module to
 identify images that should be treated together as a group when "tweaking"
 their ``WCS``. That is, all images within a group will have the same
 correction applied to their ``WCS``\ es. This is often the case with images
-that come from differenct chips of the same sensor chip assembly (SCA).
+that come from different chips of the same sensor chip assembly (SCA).
 
 .. note::
     Grouping logic/algorithms are inherently telescope and instrument
@@ -19,6 +19,7 @@ that come from differenct chips of the same sensor chip assembly (SCA).
 :License: :doc:`../LICENSE`
 
 """
+
 # STDLIB
 import logging
 import uuid
@@ -26,13 +27,12 @@ import uuid
 # LOCAL
 from .. import __version__  # noqa: F401
 
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
 def assign_jwst_tweakwcs_groups(images):
-    """ Assign group IDs to ``JWST`` images.
+    """Assign group IDs to ``JWST`` images.
 
     Parameters
     ----------
@@ -47,8 +47,9 @@ def assign_jwst_tweakwcs_groups(images):
     try:
         from jwst.datamodels import open as open_data  # pylint: disable=W0611
     except ImportError:
-        raise ImportError("'assign_jwst_tweakwcs_groups' requires that "
-                          "'jwst' package be installed.")
+        raise ImportError(
+            "'assign_jwst_tweakwcs_groups' requires that 'jwst' package be installed."
+        )
 
     close = [isinstance(im, (str, bytes)) for im in images]
 
@@ -64,7 +65,7 @@ def assign_jwst_tweakwcs_groups(images):
                 model.meta.observation.visit_group,
                 model.meta.observation.sequence_id,
                 model.meta.observation.activity_id,
-                model.meta.observation.exposure_number
+                model.meta.observation.exposure_number,
             )
 
             if meta_ids in group_ids:
@@ -78,11 +79,15 @@ def assign_jwst_tweakwcs_groups(images):
                 group_ids[meta_ids] = gid
 
         except Exception as e:
-            gid = 'None'
-            log.warning("Unable to assign a 'tweakwcs_group_id' to image "
-                        "'{}' due to '{}'".format(model.meta['filename'], e))
-            log.warning("'tweakwcs_group_id' for image '{}' will be set "
-                        "to None".format(model.meta['filename']))
+            gid = "None"
+            log.warning(
+                "Unable to assign a 'tweakwcs_group_id' to image '%s' due to '%s'",
+                model.meta["filename"],
+                e,
+            )
+            log.warning(
+                "'tweakwcs_group_id' for image '%s' will be set to None", model.meta["filename"]
+            )
 
         finally:
             if "tweakwcs_group_id" not in model.meta:  # pragma: no branch
@@ -95,11 +100,11 @@ def assign_jwst_tweakwcs_groups(images):
                                 "tweakwcs_group_id": {
                                     "title": "tweakwcs group ID",
                                     "type": "string",
-                                    "fits_keyword": "TWEAKGID"
+                                    "fits_keyword": "TWEAKGID",
                                 }
-                            }
+                            },
                         }
-                    }
+                    },
                 }
                 model.extend_schema(twgid_schema)
             model.meta.tweakwcs_group_id = gid
